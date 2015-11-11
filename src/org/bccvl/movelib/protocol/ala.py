@@ -29,9 +29,8 @@ ALAService used to interface with Atlas of Living Australia (ALA)
 LOG = logging.getLogger(__name__)
 
 
-def validate(source):
-    url = urlparse(source['url'])
-    return url.schema == 'ala' and url.query and parse_qs(url.query).get('lsid')
+def validate(url):
+    return url.scheme == 'ala' and url.query and parse_qs(url.query).get('lsid')
 
 
 def download(source, dest=None):
@@ -75,7 +74,7 @@ def _download_occurrence_by_lsid(lsid, dest):
     # TODO: validate dest is a dir?
 
     # Get occurrence data
-    occurrence_url = settings['occurrence_url'].format({'lsid': lsid})
+    occurrence_url = settings['occurrence_url'].format(lsid=lsid)
     temp_file = None
     try:
         temp_file, _ = urllib.urlretrieve(occurrence_url)
@@ -103,7 +102,7 @@ def _download_metadata_for_lsid(lsid, dest):
     # TODO: verify dest is a dir?
 
     # Get occurrence metadata
-    metadata_url = settings['metadata_url'].format({'lsid': lsid})
+    metadata_url = settings['metadata_url'].format(lsid=lsid)
     try:
         metadata_file, _ = urllib.urlretrieve(metadata_url,
                                               os.path.join(dest, 'ala_metadata.json'))
@@ -163,7 +162,7 @@ def _ala_postprocess(csvfile, mdfile, lsid, dest):
         ],
         'provenance': {
             'source': 'ALA',
-            'url': settings['occurrence_url'].format({'lsid': lsid}),
+            'url': settings['occurrence_url'].format(lsid=lsid),
             'source_date': imported_date
         }
     }
@@ -206,18 +205,18 @@ def _normalize_occurrence(file_path, taxon_name):
         # skip the header
         next(csv_reader)
         for row in csv_reader:
-            lon = row[0]
-            lat = row[1]
-            uncertainty = row[2]
-            date = row[3]
-            year = row[4]
-            month = row[5]
+            lon = row[1]
+            lat = row[2]
+            uncertainty = row[3]
+            date = row[4]
+            year = row[5]
+            month = row[6]
 
             # TODO: isn't there a builtin for this?
             if not _is_number(lon) or not _is_number(lat):
                 continue
 
-            if 'true' in row[6:]:
+            if 'true' in row[7:]:
                 continue
 
             new_csv.append([taxon_name, lon, lat, uncertainty, date, year, month])

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import logging
 import os
 import pwd
@@ -10,8 +11,7 @@ from scp import SCPClient, SCPException
 LOG = logging.getLogger(__name__)
 
 
-def validate_url(source):
-    url = urlparse(source['url'])
+def validate(url):
     return (url.scheme == 'scp' and url.hostname.strip() != ''
             and url.path.strip() != '')
 
@@ -41,6 +41,8 @@ def download(source, dest=None):
         scp = SCPClient(ssh.get_transport())
         if not dest:
             dest = tempfile.mkstemp()
+        else:
+            dest = os.path.join(dest, 'tmp_move_file')
         scp.get(url.path, dest, recursive=True)
         ssh.close()
         return [dest]

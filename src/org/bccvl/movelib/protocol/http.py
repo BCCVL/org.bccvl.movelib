@@ -1,3 +1,4 @@
+import os
 import logging
 import urllib
 from urlparse import urlparse
@@ -8,8 +9,7 @@ LOG = logging.getLogger(__name__)
 # TODO: consider using urllib2 or requests to support additional features
 
 
-def validate(source):
-    url = urlparse(source['url'])
+def validate(url):
     return url.scheme in ['http', 'https']
 
 
@@ -24,7 +24,8 @@ def download(source, dest=None):
     """
 
     try:
-        temp_file, _ = urllib.urlretrieve(source['url'], dest)
+        dest_path = os.path.join(dest, 'tmp_move_file')
+        temp_file, _ = urllib.urlretrieve(source['url'], dest_path)
         return [temp_file]
     except Exception as e:
         LOG.error("Could not download file: %s: %s", source['url'], e)

@@ -1,17 +1,18 @@
 import os
 import tempfile
 import shutil
-from urllib import urlparse
+from urlparse import urlparse
 
-from org.bccvl.movelib import ala
-from org.bccvl.movelib import http
-from org.bccvl.movelib import scp
-from org.bccvl.movelib import swift
+from org.bccvl.movelib.protocol import ala
+from org.bccvl.movelib.protocol import http
+from org.bccvl.movelib.protocol import scp
+from org.bccvl.movelib.protocol import swift
 
 
 SERVICES = {
     'ala': ala,
     'http': http,
+    'https': http,
     'scp': scp,
     'swift': swift
 }
@@ -29,7 +30,7 @@ def move(source, dest):
     """
 
     if (source is None or dest is None
-        or source.get('url') is None, or dest.get('url') is None):
+        or source.get('url') is None or dest.get('url') is None):
         raise Exception('Missing source/destination url')
 
     url = urlparse(source['url'])
@@ -37,7 +38,7 @@ def move(source, dest):
         raise Exception("Unknown source URL scheme '{0}'".format(source['url']))
 
     src_service = SERVICES[url.scheme]
-    if not src_service.validate_url(url):
+    if not src_service.validate(url):
         raise Exception('Invalid source url')
 
     url = urlparse(dest['url'])
@@ -49,7 +50,7 @@ def move(source, dest):
     if not hasattr(dest_service, 'upload'):
         raise Exception("Upload not supported for destination '{0}'".format(dest['url']))
 
-    if not dest_service.validate_url(url):
+    if not dest_service.validate(url):
         raise Exception('Invalid destination url')
 
     try:

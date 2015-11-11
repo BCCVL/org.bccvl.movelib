@@ -1,7 +1,8 @@
+import os
 import logging
 import tempfile
 from urlparse import urlparse
-from swiftclient.service import SwiftService
+from swiftclient.service import SwiftService, SwiftUploadObject
 
 """
 Swift Service used to interface with Nectar Object data store
@@ -15,10 +16,9 @@ http://host:port/v1/account/container/object
 LOG = logging.getLogger(__name__)
 
 
-def validate(source):
+def validate(url):
     # check that container and file are specified in swift url.
     # i.e. swift://nectar/my-container/path/to/file
-    url = urlparse(source['url'])
     path_tokens = url.path.split('/', 2)
     return (url.scheme == 'swift' and len(path_tokens) >= 3
             and len(path_tokens[1]) > 0 and len(path_tokens[2]) > 0)
@@ -47,13 +47,14 @@ def download(source, dest=None):
 
     swift_opts = {}
     # SwiftService knows about environment variables
-    for opt in ('authurl', 'user', 'key', 'tenant_name', 'auth_version'):
+    for opt in ('auth', 'user', 'key', 'os_tenant_name', 'auth_version'):
         if opt in source:
             swift_opts[opt] = source[opt]
     try:
         swift = SwiftService(swift_opts)
         filelist = []
-        for result in swift.download(container, [src_path], {'out_file': dest}):
+        outfilename = os.path.join(dest, 'tmp_move_file')
+        for result in swift.download(container, [src_path], {'out_file': outfilename}):
             # result dict:  success
             #    action: 'download_object'
             #    success: True
@@ -71,8 +72,8 @@ def download(source, dest=None):
             #    container, object, error_timestamp, response_dict, path
             #    psudodir, attempts
             if not result['success']:
-                raise Exception('Download from swift {container} / {object} to {path} failed with {error}'.format(**result))
-            filelist.append(result['path'])
+                raise Exception('Download from swift {container}/{object} to {out_file} failed with {error}'.format(out_file=outfilename, **result))
+            filelist.append(outfilename)
         return filelist
     except Exception as e:
         LOG.error("Download from Swift failed: %s", e)
@@ -96,15 +97,18 @@ def upload(source, dest):
     #                            parameter if we ever need it
     # TODO: check if we have a dst_path at all?
     container = path_tokens[1]
-    dst_path = path_tokens[2]
+    dest_path = path_tokens[2]
 
     swift_opts = {}
     # SwiftService knows about environment variables
-    for opt in ('authurl', 'user', 'key', 'tenant_name', 'auth_version'):
-        if opt in source:
-            swift_opts[opt] = source[opt]
+    for opt in ('auth', 'user', 'key', 'os_tenant_name', 'auth_version'):
+        if opt in dest:
+            swift_opts[opt] = dest[opt]
     try:
         swift = SwiftService(swift_opts)
-        for result in swift.upload(container, [source]):
+        for result in swift.upload(container, [SwiftUploadObject(source, object_name=dest_path)]):
             if not result['success']:
-                raise Exception('Upload to Swift {container} / {object} failed with {error}'.format(**result))
+                raise Exception('Upload to Swift {container}/{dest_file} failed with {error}'.format(dest_file=dest_path, **result))
+    except Exception as e:
+	LOG.error("Upload to swift failed: %s", e)
+        raise
