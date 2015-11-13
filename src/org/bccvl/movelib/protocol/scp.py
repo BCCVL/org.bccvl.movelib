@@ -45,7 +45,12 @@ def download(source, dest=None):
             dest = os.path.join(dest, 'tmp_move_file')
         scp.get(url.path, dest, recursive=True)
         ssh.close()
-        return [dest]
+
+        outputfile = { 'url' : dest,
+                       'name': os.path.basename(url.path),
+                       'content_type': 'application/octet-stream'
+		     }
+        return [outputfile]
     except SCPException:
         LOG.error("Could not SCP file %s from %s to local destination\
                   %s as user %s", url.path, url.hostname, dest, username)
@@ -76,11 +81,13 @@ def upload(source, dest):
 
         ssh.connect(url.hostname, username=username, password=url.password)
 
+        dest_filename = dest.get('filename', source['name'])
+        dest_path = os.path.join(url.path, dest_filename)
         scp = SCPClient(ssh.get_transport())
-        scp.put(source, url.path, recursive=False)  # recursive should be an option in dest dict?
+        scp.put(source['url'], dest_path, recursive=False)  # recursive should be an option in dest dict?
         ssh.close()
         return dest
     except:
         LOG.error("Could not SCP file %s to destination %s on %s as user %s",
-                  source, dest.path, dest.hostname, username)
+                  source['url'], dest_path, dest.hostname, username)
         raise

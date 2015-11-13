@@ -52,8 +52,8 @@ def download(source, dest=None):
     try:
         csvfile = _download_occurrence_by_lsid(lsid, dest)
         mdfile = _download_metadata_for_lsid(lsid, dest)
-        dsfile, taxa = _ala_postprocess(csvfile, mdfile, lsid, dest)
-        _normalize_occurrence(csvfile, taxa)
+        dsfile, taxa = _ala_postprocess(csvfile['url'], mdfile['url'], lsid, dest)
+        _normalize_occurrence(csvfile['url'], taxa)
         return [dsfile, csvfile, mdfile]
     except Exception as e:
         LOG.error("Failed to download occurrence data with lsid '{0}': {1}".format(lsid, e))
@@ -74,6 +74,7 @@ def _download_occurrence_by_lsid(lsid, dest):
     # TODO: validate dest is a dir?
 
     # Get occurrence data
+
     occurrence_url = settings['occurrence_url'].format(lsid=lsid)
     temp_file = None
     try:
@@ -93,7 +94,10 @@ def _download_occurrence_by_lsid(lsid, dest):
     finally:
         if temp_file:
             os.remove(temp_file)
-    return os.path.join(dest, 'ala_occurrence.csv')
+
+    return { 'url' : os.path.join(dest, 'ala_occurrence.csv'),
+             'name': 'ala_occurrence.csv',
+             'content_type': 'text/csv'}
 
 
 def _download_metadata_for_lsid(lsid, dest):
@@ -106,11 +110,14 @@ def _download_metadata_for_lsid(lsid, dest):
     try:
         metadata_file, _ = urllib.urlretrieve(metadata_url,
                                               os.path.join(dest, 'ala_metadata.json'))
-        return metadata_file
     except Exception as e:
         LOG.error("Could not download occurrence metadata from ALA for LSID %s : %s",
                   lsid, e)
         raise
+
+    return { 'url' : metadata_file,
+             'name': 'ala_metadata.json',
+             'content_type': 'application/json'}
 
 
 def _ala_postprocess(csvfile, mdfile, lsid, dest):
@@ -172,7 +179,10 @@ def _ala_postprocess(csvfile, mdfile, lsid, dest):
     f = io.open(dataset_path, mode='wb')
     json.dump(ala_dataset, f, indent=2)
     f.close()
-    return dataset_path, taxon_name
+    dsfile = { 'url' : dataset_path,
+               'name': 'ala_dataset.json',
+               'content_type': 'application/json'}
+    return dsfile, taxon_name
 
 
 def _normalize_occurrence(file_path, taxon_name):

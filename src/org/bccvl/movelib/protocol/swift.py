@@ -20,8 +20,7 @@ def validate(url):
     # check that container and file are specified in swift url.
     # i.e. swift://nectar/my-container/path/to/file
     path_tokens = url.path.split('/', 2)
-    return (url.scheme == 'swift' and len(path_tokens) >= 3
-            and len(path_tokens[1]) > 0 and len(path_tokens[2]) > 0)
+    return (url.scheme == 'swift' and len(path_tokens) >= 2 and len(path_tokens[1]) > 0)
 
 
 def download(source, dest=None):
@@ -73,7 +72,10 @@ def download(source, dest=None):
             #    psudodir, attempts
             if not result['success']:
                 raise Exception('Download from swift {container}/{object} to {out_file} failed with {error}'.format(out_file=outfilename, **result))
-            filelist.append(outfilename)
+            outfile = { 'url' : outfilename,
+                        'name': os.path.basename(src_path),
+                        'content_type': result['response_dict']['headers'].get('content-type', 'application/octet-stream')}
+            filelist.append(outfile)
         return filelist
     except Exception as e:
         LOG.error("Download from Swift failed: %s", e)
@@ -83,10 +85,10 @@ def download(source, dest=None):
 def upload(source, dest):
     """
     Upload file to a remote SWIFT store
-    @param local_src_list: List of local source path to upload from.
-    @type local_src_list: str
-    @param dest_info: The destination information such as destination url to upload the file.
-    @type dest_path: Dictionary
+    @param source: List of local source path to upload from.
+    @type source : Dicrionary
+    @param dest: The destination information such as destination url to upload the file.
+    @type dest: Dictionary
     @return: True if upload is successful. Otherwise False.
     """
 
@@ -97,7 +99,9 @@ def upload(source, dest):
     #                            parameter if we ever need it
     # TODO: check if we have a dst_path at all?
     container = path_tokens[1]
-    dest_path = path_tokens[2]
+    dest_path = dest.get('filename', source['name'])
+    if len(path_tokens) >= 3:
+    	dest_path = os.path.join(path_tokens[2], dest_path) 
 
     swift_opts = {}
     # SwiftService knows about environment variables
@@ -106,7 +110,7 @@ def upload(source, dest):
             swift_opts[opt] = dest[opt]
     try:
         swift = SwiftService(swift_opts)
-        for result in swift.upload(container, [SwiftUploadObject(source, object_name=dest_path)]):
+        for result in swift.upload(container, [SwiftUploadObject(source['url'], object_name=dest_path, options={'header': ['Content-Type:' + source['content_type']]})]):
             if not result['success']:
                 raise Exception('Upload to Swift {container}/{dest_file} failed with {error}'.format(dest_file=dest_path, **result))
     except Exception as e:

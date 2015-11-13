@@ -24,9 +24,14 @@ def download(source, dest=None):
     """
 
     try:
-        dest_path = os.path.join(dest, 'tmp_move_file')
-        temp_file, _ = urllib.urlretrieve(source['url'], dest_path)
-        return [temp_file]
+        filename = os.path.basename(source['url'])
+        dest_path = os.path.join(dest, filename)
+        temp_file, headers = urllib.urlretrieve(source['url'], dest_path)
+	htmlfile = {'url' : dest_path,
+                    'name': filename,
+                    'content_type': headers.get('Content-Type') 
+		   }
+        return [htmlfile]
     except Exception as e:
         LOG.error("Could not download file: %s: %s", source['url'], e)
         raise
