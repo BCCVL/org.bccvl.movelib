@@ -2,26 +2,26 @@ from org.bccvl.movelib import move
 
 swift_source = { 'url': 'swift://nectar/container2/test/test2.txt',
            'auth': 'https://keystone.rc.nectar.org.au:5000/v2.0/',
-           'user': 'y.liaw@griffith.edu.au',
-	         'key' : 'YjFiMGQ5ZDg0MDUwYTg3',
-           'os_tenant_name': 'pt-14982',
+           'user': 'username@griffith.edu.au',
+	         'key' : 'password',
+           'os_tenant_name': 'pt-12345',
 	         'auth_version': '2'   
 }
 
 swift_dest = { 'url': 'swift://nectar/container2',
          'auth': 'https://keystone.rc.nectar.org.au:5000/v2.0/',
-         'user': 'y.liaw@griffith.edu.au',
-	       'key' : 'YjFiMGQ5ZDg0MDUwYTg3',
-         'os_tenant_name': 'pt-14982',
+         'user': 'username@griffith.edu.au',
+	       'key' : 'password',
+         'os_tenant_name': 'pt-12345',
 	       'auth_version': '2'   
 }
 
 # swift destination with filename specified
 swift_dest2 = { 'url': 'swift://nectar/container2',
          'auth': 'https://keystone.rc.nectar.org.au:5000/v2.0/',
-         'user': 'y.liaw@griffith.edu.au',
-	       'key' : 'YjFiMGQ5ZDg0MDUwYTg3',
-         'os_tenant_name': 'pt-14982',
+         'user': 'username@griffith.edu.au',
+	       'key' : 'password',
+         'os_tenant_name': 'pt-12345',
 	       'auth_version': '2',
 	 'filename': 'test3.txt'   
 }
