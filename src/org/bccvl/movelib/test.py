@@ -1,4 +1,5 @@
 from org.bccvl.movelib import move
+from org.bccvl.tasks.utils import AuthTkt
 
 swift_source = { 'url': 'swift://nectar/container2/test/test2.txt',
            'auth': 'https://keystone.rc.nectar.org.au:5000/v2.0/',
@@ -26,11 +27,14 @@ swift_dest2 = { 'url': 'swift://nectar/container2',
 	 'filename': 'test3.txt'   
 }
 
-http_source = { 'url': 'http://www.news.com.au/national/breaking-news/i-wasnt-moonlighting-as-nurse-qld-mp/story-e6frfku9-1227604589349'
+# Generate cookies for http
+ticket = AuthTkt('secret', 'userid')
+http_source = { 'url': 'http://www.news.com.au/national/breaking-news/i-wasnt-moonlighting-as-nurse-qld-mp/story-e6frfku9-1227604589349',
+                'cookies': {'__ac': ticket.ticket()}
 }
 
-scp_source = { 'url': 'scp://root:ibycgtpw@192.168.100.200/root/getusage.py'}
-scp_dest = { 'url': 'scp://root:ibycgtpw@192.168.100.200/root', 'filename': 't34.txt'}
+scp_source = { 'url': 'scp://username:password@hostname/srcpath/srcfile1'}
+scp_dest = { 'url': 'scp://username:password@hostname/destpath', 'filename': 'destfilename.txt'}
 
 ala_source = { 'url': 'ala://ala/?lsid=urn:lsid:biodiversity.org.au:afd.taxon:31a9b8b8-4e8f-4343-a15f-2ed24e0bf1ae' }
 
