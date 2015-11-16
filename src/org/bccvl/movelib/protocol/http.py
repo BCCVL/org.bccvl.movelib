@@ -1,12 +1,8 @@
 import os
 import logging
-import urllib
-from urlparse import urlparse
+import requests
 
 LOG = logging.getLogger(__name__)
-
-# TODO: check headers return of urlretrieve
-# TODO: consider using urllib2 or requests to support additional features
 
 
 def validate(url):
@@ -26,12 +22,21 @@ def download(source, dest=None):
     try:
         filename = os.path.basename(source['url'])
         dest_path = os.path.join(dest, filename)
-        temp_file, headers = urllib.urlretrieve(source['url'], dest_path)
-	htmlfile = {'url' : dest_path,
+
+        # Download from the source URL using cookies and then write content to file
+        response = requests.get(source['url'], cookies = source.get('cookies', {}), timeout = 7200.0)
+        if response.reason != 'OK':
+            raise Exception('reson: {0}'.format(response.reason))
+    
+        open(dest_path, 'w').write(response.content);
+        htmlfile = {'url' : dest_path,
                     'name': filename,
-                    'content_type': headers.get('Content-Type') 
-		   }
+                    'content_type': response.headers.get('Content-Type')
+                   }
         return [htmlfile]
     except Exception as e:
         LOG.error("Could not download file: %s: %s", source['url'], e)
         raise
+    finally:
+        if response:
+            response.close()
