@@ -33,11 +33,7 @@ def download(source, dest=None):
         cookie = source.get('cookies', {})
 
         s = requests.Session()
-        cookiename = cookie.get('name')
-        cookievalue = cookie.get('value')
-        del cookie['name']
-        del cookie['value']
-        s.cookies.set(cookiename, cookievalue, **cookie)
+        s.cookies.set(**cookie)
         response = s.get(source['url'])
 
         if response.reason != 'OK':
