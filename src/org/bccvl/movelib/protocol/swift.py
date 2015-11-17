@@ -52,7 +52,10 @@ def download(source, dest=None):
     try:
         swift = SwiftService(swift_opts)
         filelist = []
-        outfilename = os.path.join(dest, 'tmp_move_file')
+        if os.path.exists(dest) and os.path.isdir(dest):
+            outfilename = os.path.join(dest, 'tmp_move_file')
+        else: 
+            outfilename = dest
         for result in swift.download(container, [src_path], {'out_file': outfilename}):
             # result dict:  success
             #    action: 'download_object'
@@ -114,5 +117,5 @@ def upload(source, dest):
             if not result['success']:
                 raise Exception('Upload to Swift {container}/{dest_file} failed with {error}'.format(dest_file=dest_path, **result))
     except Exception as e:
-	LOG.error("Upload to swift failed: %s", e)
+        LOG.error("Upload to swift failed: %s", e)
         raise

@@ -7,14 +7,15 @@ from org.bccvl.movelib.protocol import ala
 from org.bccvl.movelib.protocol import http
 from org.bccvl.movelib.protocol import scp
 from org.bccvl.movelib.protocol import swift
-
+from org.bccvl.movelib.protocol import file as fcp
 
 SERVICES = {
     'ala': ala,
     'http': http,
     'https': http,
     'scp': scp,
-    'swift': swift
+    'swift': swift,
+    'file': fcp
 }
 
 
@@ -33,35 +34,42 @@ def move(source, dest):
         or source.get('url') is None or dest.get('url') is None):
         raise Exception('Missing source/destination url')
 
-    url = urlparse(source['url'])
-    if url.scheme not in SERVICES:
+    surl = urlparse(source['url'])
+    if surl.scheme not in SERVICES:
         raise Exception("Unknown source URL scheme '{0}'".format(source['url']))
 
-    src_service = SERVICES[url.scheme]
-    if not src_service.validate(url):
+    src_service = SERVICES[surl.scheme]
+    if not src_service.validate(surl):
         raise Exception('Invalid source url')
 
-    url = urlparse(dest['url'])
-    if url.scheme not in SERVICES:
+    durl = urlparse(dest['url'])
+    if durl.scheme not in SERVICES:
         raise Exception("Unknown destination URL scheme '{0}'".format(dest['url']))
 
-    dest_service = SERVICES[url.scheme]
+    dest_service = SERVICES[durl.scheme]
     # Check if upload function is supported i.e. ALA does not support upload
     if not hasattr(dest_service, 'upload'):
         raise Exception("Upload not supported for destination '{0}'".format(dest['url']))
 
-    if not dest_service.validate(url):
+    if not dest_service.validate(durl):
         raise Exception('Invalid destination url')
 
     try:
-        # Store all the source files for this job in a temporary local directory
-        temp_dir = tempfile.mkdtemp(prefix='move_job_')
-        files = src_service.download(source, temp_dir)
+        temp_dir = None
+        if durl.scheme == 'file':
+            # Download file directly to local destination
+            dest_filename = dest.get('filename', os.path.basename(surl.path))
+            destpath = os.path.join(durl.path, dest_filename)
+            files = src_service.download(source, destpath)
+        else:
+            # Download source files to a temporary local directory before transfer files to destination
+            temp_dir = tempfile.mkdtemp(prefix='move_job_')
+            files = src_service.download(source, temp_dir)
 
-        for file in files:
-            dest_service.upload(file, dest)
+            for file in files:
+                dest_service.upload(file, dest)
 
     finally:
         # Remove temporary directory
-        if os.path.exists(temp_dir):
+        if temp_dir is not None and os.path.exists(temp_dir):
             shutil.rmtree(temp_dir)

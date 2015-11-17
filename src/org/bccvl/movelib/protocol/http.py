@@ -1,6 +1,7 @@
 import os
 import logging
 import requests
+from urlparse import urlparse
 
 LOG = logging.getLogger(__name__)
 
@@ -20,11 +21,25 @@ def download(source, dest=None):
     """
 
     try:
-        filename = os.path.basename(source['url'])
-        dest_path = os.path.join(dest, filename)
+        srcurl = urlparse(source['url'])
+        if os.path.exists(dest) and os.path.isdir(dest):
+            filename = os.path.basename(srcurl.path)
+            dest_path = os.path.join(dest, filename)
+        else:
+            filename = os.path.basename(dest)
+            dest_path = dest
 
         # Download from the source URL using cookies and then write content to file
-        response = requests.get(source['url'], cookies = source.get('cookies', {}), timeout = 7200.0)
+        cookie = source.get('cookies', {})
+
+        s = requests.Session()
+        cookiename = cookie.get('name')
+        cookievalue = cookie.get('value')
+        del cookie['name']
+        del cookie['value']
+        s.cookies.set(cookiename, cookievalue, **cookie)
+        response = s.get(source['url'])
+
         if response.reason != 'OK':
             raise Exception('reson: {0}'.format(response.reason))
     
