@@ -29,6 +29,9 @@ setup(
         'setuptools',
     ],
     extras_require={
+        'scp': ['paramiko', 'scp'],
+        'swift': ['python-swiftclient', 'python-keystoneclient'],
+        'http': ['requests'],
     },
 
 )
