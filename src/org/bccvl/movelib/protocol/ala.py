@@ -52,8 +52,7 @@ def download(source, dest=None):
     try:
         csvfile = _download_occurrence_by_lsid(lsid, dest)
         mdfile = _download_metadata_for_lsid(lsid, dest)
-        dsfile, taxa = _ala_postprocess(csvfile['url'], mdfile['url'], lsid, dest)
-        _normalize_occurrence(csvfile['url'], taxa)
+        dsfile = _ala_postprocess(csvfile['url'], mdfile['url'], lsid, dest)
         return [dsfile, csvfile, mdfile]
     except Exception as e:
         LOG.error("Failed to download occurrence data with lsid '{0}': {1}".format(lsid, e))
@@ -182,7 +181,7 @@ def _ala_postprocess(csvfile, mdfile, lsid, dest):
     dsfile = { 'url' : dataset_path,
                'name': 'ala_dataset.json',
                'content_type': 'application/json'}
-    return dsfile, taxon_name
+    return dsfile
 
 
 def _normalize_occurrence(file_path, taxon_name):
