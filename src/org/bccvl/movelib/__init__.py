@@ -1,22 +1,24 @@
+import importlib
 import os
-import tempfile
 import shutil
+import tempfile
 from urlparse import urlparse
+import warnings
 
-from org.bccvl.movelib.protocol import ala
-from org.bccvl.movelib.protocol import http
-from org.bccvl.movelib.protocol import scp
-from org.bccvl.movelib.protocol import swift
-from org.bccvl.movelib.protocol import file as fcp
 
-SERVICES = {
-    'ala': ala,
-    'http': http,
-    'https': http,
-    'scp': scp,
-    'swift': swift,
-    'file': fcp
-}
+SERVICES = {}
+
+for service in ('ala', 'http', 'scp', 'swift', 'file'):
+    try:
+        module = importlib.import_module(
+            '{0}.{1}.{2}'.format(__name__, 'protocol', service))
+        for proto in module.PROTOCOLS:
+            if proto in SERVICES:
+                warnings.warn('Duplicate protocol handler found: {}'.format(proto))
+            SERVICES[proto] = module
+    except ImportError as e:
+        # TODO: should we output some warning here?
+        pass
 
 
 def move(source, dest):

@@ -9,6 +9,8 @@ import urllib
 from urlparse import urlparse, parse_qs
 import zipfile
 
+PROTOCOLS = ('ala',)
+
 SPECIES = 'species'
 LONGITUDE = 'lon'
 LATITUDE = 'lat'

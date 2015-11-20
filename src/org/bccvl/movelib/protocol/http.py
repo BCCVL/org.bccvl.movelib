@@ -3,6 +3,9 @@ import logging
 import requests
 from urlparse import urlparse
 
+
+PROTOCOLS = ('http', 'https')
+
 LOG = logging.getLogger(__name__)
 
 
@@ -38,7 +41,7 @@ def download(source, dest=None):
 
         if response.reason != 'OK':
             raise Exception('reson: {0}'.format(response.reason))
-    
+
         open(dest_path, 'w').write(response.content);
         htmlfile = {'url' : dest_path,
                     'name': filename,

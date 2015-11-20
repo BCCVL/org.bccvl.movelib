@@ -8,6 +8,8 @@ from urlparse import urlparse
 from paramiko import SSHClient, AutoAddPolicy
 from scp import SCPClient, SCPException
 
+PROTOCOLS = ('scp',)
+
 LOG = logging.getLogger(__name__)
 
 
@@ -43,7 +45,7 @@ def download(source, dest=None):
         # Download file to a local temporary file if a local file path is not specified.
         if not dest:
             dest = tempfile.mkstemp()
-        
+
         if os.path.exists(dest) and os.path.isdir(dest):
             dest = os.path.join(dest, 'tmp_move_file')
 

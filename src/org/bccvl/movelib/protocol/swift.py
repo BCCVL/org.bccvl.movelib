@@ -13,6 +13,8 @@ swift://host:port/account/container/object
 http://host:port/v1/account/container/object
 """
 
+PROTOCOLS = ('swift',)
+
 LOG = logging.getLogger(__name__)
 
 
@@ -54,7 +56,7 @@ def download(source, dest=None):
         filelist = []
         if os.path.exists(dest) and os.path.isdir(dest):
             outfilename = os.path.join(dest, 'tmp_move_file')
-        else: 
+        else:
             outfilename = dest
         for result in swift.download(container, [src_path], {'out_file': outfilename}):
             # result dict:  success
@@ -104,7 +106,7 @@ def upload(source, dest):
     container = path_tokens[1]
     dest_path = dest.get('filename', source['name'])
     if len(path_tokens) >= 3:
-    	dest_path = os.path.join(path_tokens[2], dest_path) 
+    	dest_path = os.path.join(path_tokens[2], dest_path)
 
     swift_opts = {}
     # SwiftService knows about environment variables

@@ -4,6 +4,9 @@ import pwd
 import shutil
 from urlparse import urlparse
 
+
+PROTOCOLS = ('file',)
+
 LOG = logging.getLogger(__name__)
 
 def validate(url):
