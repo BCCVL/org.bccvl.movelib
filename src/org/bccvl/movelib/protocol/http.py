@@ -34,6 +34,7 @@ def download(source, dest=None):
 
         # Download from the source URL using cookies and then write content to file
         cookie = source.get('cookies', {})
+        verify = source.get('verify', None)
 
         s = requests.Session()
         s.cookies.set(**cookie)
