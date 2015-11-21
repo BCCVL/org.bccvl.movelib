@@ -44,6 +44,7 @@ def move(source, dest):
     if not src_service.validate(surl):
         raise Exception('Invalid source url')
 
+    # TODO: Do I need to check SERVICES if dest_url is file:// ? -> we are not using upload .... otherwise if we stream data, upload would be suitable
     durl = urlparse(dest['url'])
     if durl.scheme not in SERVICES:
         raise Exception("Unknown destination URL scheme '{0}'".format(dest['url']))
@@ -57,15 +58,15 @@ def move(source, dest):
         raise Exception('Invalid destination url')
 
     try:
+        # TODO: another option would be to let download return a stream
+        #       which could be used by upload directly (no tmp storage)
         temp_dir = None
         if durl.scheme == 'file':
-            # Download file directly to local destination
-            dest_filename = dest.get('filename', os.path.basename(surl.path))
-            destpath = os.path.join(durl.path, dest_filename)
-            files = src_service.download(source, destpath)
+            # Shortcut: Download file directly to local destination
+            files = src_service.download(source, durl.path)
         else:
             # Download source files to a temporary local directory before transfer files to destination
-            temp_dir = tempfile.mkdtemp(prefix='move_job_')
+            temp_dir = tempfile.mkdtemp(prefix='movelib_')
             files = src_service.download(source, temp_dir)
 
             for file in files:
