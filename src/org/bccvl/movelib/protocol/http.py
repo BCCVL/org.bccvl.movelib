@@ -51,6 +51,6 @@ def download(source, dest=None):
     except Exception as e:
         LOG.error("Could not download file: %s: %s", source['url'], e)
         raise
-    finally:
-        if response:
-            response.close()
+    # finally:
+    #     if response:
+    #         response.close()
