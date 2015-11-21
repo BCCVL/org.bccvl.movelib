@@ -37,10 +37,10 @@ def download(source, dest=None):
 
         s = requests.Session()
         s.cookies.set(**cookie)
-        response = s.get(source['url'])
-
-        if response.reason != 'OK':
-            raise Exception('reson: {0}'.format(response.reason))
+        # TODO: use stream option
+        response = s.get(source['url'], verify=verify)
+        # raise exception case of error
+        response.raise_for_status()
 
         open(dest_path, 'w').write(response.content);
         htmlfile = {'url' : dest_path,
