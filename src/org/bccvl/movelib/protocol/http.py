@@ -1,5 +1,6 @@
-import os
+from contextlib import closing
 import logging
+import os
 import requests
 from urlparse import urlparse
 
@@ -22,7 +23,7 @@ def download(source, dest=None):
     @type dest: str
     @return: True and a list of files downloaded if successful. Otherwise False.
     """
-
+    response = None
     try:
         srcurl = urlparse(source['url'])
         if os.path.exists(dest) and os.path.isdir(dest):
@@ -38,12 +39,17 @@ def download(source, dest=None):
 
         s = requests.Session()
         s.cookies.set(**cookie)
-        # TODO: use stream option
-        response = s.get(source['url'], verify=verify)
+
+        response = s.get(source['url'], stream=True, verify=verify)
         # raise exception case of error
         response.raise_for_status()
 
-        open(dest_path, 'w').write(response.content);
+        # TODO: could check response.headers['content-length'] to decide streaming or not
+        with open(dest_path, 'w') as f:
+            for chunk in response.iter_content(chunk_size=4096):
+                if chunk:  # filter out keep-alive new chunks
+                    f.write(chunk)
+
         htmlfile = {'url' : dest_path,
                     'name': filename,
                     'content_type': response.headers.get('Content-Type')
@@ -52,6 +58,7 @@ def download(source, dest=None):
     except Exception as e:
         LOG.error("Could not download file: %s: %s", source['url'], e)
         raise
-    # finally:
-    #     if response:
-    #         response.close()
+    finally:
+        # We need to close response in case we did not consume all data
+        if response:
+            response.close()
