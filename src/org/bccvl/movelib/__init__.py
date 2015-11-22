@@ -57,15 +57,16 @@ def move(source, dest):
     if not dest_service.validate(durl):
         raise Exception('Invalid destination url')
 
+    temp_dir = None
     try:
         # TODO: another option would be to let download return a stream
         #       which could be used by upload directly (no tmp storage)
-        temp_dir = None
         if durl.scheme == 'file':
             # Shortcut: Download file directly to local destination
             files = src_service.download(source, durl.path)
         else:
             # Download source files to a temporary local directory before transfer files to destination
+            # TODO: maybe add infos from source to temp prefix?
             temp_dir = tempfile.mkdtemp(prefix='movelib_')
             files = src_service.download(source, temp_dir)
 
