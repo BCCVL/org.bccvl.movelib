@@ -1,7 +1,9 @@
-import os
 import logging
+import os
+import re
 import tempfile
-from urlparse import urlparse
+from urlparse import urlsplit
+
 from swiftclient.service import SwiftService, SwiftUploadObject
 
 """
@@ -13,16 +15,19 @@ swift://host:port/account/container/object
 http://host:port/v1/account/container/object
 """
 
-PROTOCOLS = ('swift',)
+PROTOCOLS = ('swift+http', 'swift+https')
 
 LOG = logging.getLogger(__name__)
 
+# TODO: add support for temp_url_key ....
+#       e.g. if temp_url_key is in source/dest, use normal http transfer?
 
 def validate(url):
     # check that container and file are specified in swift url.
-    # i.e. swift://nectar/my-container/path/to/file
-    path_tokens = url.path.split('/', 2)
-    return (url.scheme == 'swift' and len(path_tokens) >= 2 and len(path_tokens[1]) > 0)
+    # i.e. swift://host:port/v1/account/container/path/to/file
+    path_tokens = url.path.split('/', 4)
+    # verify existence of version, account and container
+    return (url.scheme in PROTOCOLS and len(path_tokens) >= 4 and len(path_tokens[3]) > 0)
 
 
 def download(source, dest=None):
@@ -38,17 +43,18 @@ def download(source, dest=None):
     if not dest:
         dest = tempfile.mkstepm()
 
-    url = urlparse(source['url'])
-    path_tokens = url.path.split('/', 2)
-    # TODO: do we need account name? or do we always use default account?
-    #account = path_tokens[0] -> need to translate this into storage_url
-    #                            parameter if we ever need it
-    container = path_tokens[1]
-    src_path = path_tokens[2]
+    url = urlsplit(source['url'])
+    _, ver, account, container, object_name = url.path.split('/', 4)
 
-    swift_opts = {}
+    swift_opts = {
+        'os_storage_url': '{scheme}://{netloc}/{ver}/{account}'.format(
+            scheme=re.sub(r'^swift\+', '', url.scheme),
+            netloc=url.netloc,
+            ver=ver,
+            account=account)
+    }
     # SwiftService knows about environment variables
-    for opt in ('auth', 'user', 'key', 'os_tenant_name', 'auth_version'):
+    for opt in ('os_auth_url', 'os_username', 'os_password', 'os_tenant_name'):
         if opt in source:
             swift_opts[opt] = source[opt]
     try:
@@ -58,7 +64,7 @@ def download(source, dest=None):
             outfilename = os.path.join(dest, 'tmp_move_file')
         else:
             outfilename = dest
-        for result in swift.download(container, [src_path], {'out_file': outfilename}):
+        for result in swift.download(container, [object_name], {'out_file': outfilename}):
             # result dict:  success
             #    action: 'download_object'
             #    success: True
@@ -78,7 +84,7 @@ def download(source, dest=None):
             if not result['success']:
                 raise Exception('Download from swift {container}/{object} to {out_file} failed with {error}'.format(out_file=outfilename, **result))
             outfile = { 'url' : outfilename,
-                        'name': os.path.basename(src_path),
+                        'name': os.path.basename(object_name),
                         'content_type': result['response_dict']['headers'].get('content-type', 'application/octet-stream')}
             filelist.append(outfile)
         return filelist
@@ -97,27 +103,31 @@ def upload(source, dest):
     @return: True if upload is successful. Otherwise False.
     """
 
-    url = urlparse(dest['url'])
-    path_tokens = url.path.split('/', 2)
-    # TODO: do we need account name? or do we always use default account?
-    #account = path_tokens[0] -> need to translate this into storage_url
-    #                            parameter if we ever need it
-    # TODO: check if we have a dst_path at all?
-    container = path_tokens[1]
-    dest_path = dest.get('filename', source['name'])
-    if len(path_tokens) >= 3:
-    	dest_path = os.path.join(path_tokens[2], dest_path)
+    url = urlsplit(dest['url'])
 
-    swift_opts = {}
+    _, ver, account, container, object_name = url.path.split('/', 4)
+
+    swift_opts = {
+        'os_storage_url': '{scheme}://{netloc}/{ver}/{account}'.format(
+            scheme=re.sub(r'^swift\+', '', url.scheme),
+            netloc=url.netloc,
+            ver=ver,
+            account=account)
+    }
     # SwiftService knows about environment variables
-    for opt in ('auth', 'user', 'key', 'os_tenant_name', 'auth_version'):
+    for opt in ('os_auth_url', 'os_username', 'os_password', 'os_tenant_name'):
         if opt in dest:
             swift_opts[opt] = dest[opt]
     try:
         swift = SwiftService(swift_opts)
-        for result in swift.upload(container, [SwiftUploadObject(source['url'], object_name=dest_path, options={'header': ['Content-Type:' + source['content_type']]})]):
+        headers = []
+        if 'content_type' in source:
+            headers.append('Content-Type: {}'.format(source['content_type']))
+        for result in swift.upload(container, [SwiftUploadObject(source['url'], object_name=object_name, options={'header': headers})]):
+            # TODO: we may get  result['action'] = 'create_container'
+            #       and result['action'] = 'upload_object';  result['path'] = source['url']
             if not result['success']:
-                raise Exception('Upload to Swift {container}/{dest_file} failed with {error}'.format(dest_file=dest_path, **result))
+                raise Exception('Upload to Swift {container}/{object_name} failed with {error}'.format(object_name=object_name, **result))
     except Exception as e:
         LOG.error("Upload to swift failed: %s", e)
         raise

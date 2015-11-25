@@ -2,7 +2,7 @@ import importlib
 import os
 import shutil
 import tempfile
-from urlparse import urlparse
+from urlparse import urlsplit
 import warnings
 
 
@@ -36,7 +36,7 @@ def move(source, dest):
         or source.get('url') is None or dest.get('url') is None):
         raise Exception('Missing source/destination url')
 
-    surl = urlparse(source['url'])
+    surl = urlsplit(source['url'])
     if surl.scheme not in SERVICES:
         raise Exception("Unknown source URL scheme '{0}'".format(source['url']))
 
@@ -45,7 +45,7 @@ def move(source, dest):
         raise Exception('Invalid source url')
 
     # TODO: Do I need to check SERVICES if dest_url is file:// ? -> we are not using upload .... otherwise if we stream data, upload would be suitable
-    durl = urlparse(dest['url'])
+    durl = urlsplit(dest['url'])
     if durl.scheme not in SERVICES:
         raise Exception("Unknown destination URL scheme '{0}'".format(dest['url']))
 
@@ -64,6 +64,12 @@ def move(source, dest):
         if durl.scheme == 'file':
             # Shortcut: Download file directly to local destination
             files = src_service.download(source, durl.path)
+        elif surl.scheme == 'file':
+            # Shortcut: Upload local file
+            # remove file:// from url
+            local_source = dict(source)
+            local_source['url'] = surl.path
+            dest_service.upload(local_source, dest)
         else:
             # Download source files to a temporary local directory before transfer files to destination
             # TODO: maybe add infos from source to temp prefix?

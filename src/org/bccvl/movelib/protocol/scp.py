@@ -3,7 +3,7 @@ import logging
 import os
 import pwd
 import tempfile
-from urlparse import urlparse
+from urlparse import urlsplit, urljoin
 
 from paramiko import SSHClient, AutoAddPolicy
 from scp import SCPClient, SCPException
@@ -32,7 +32,7 @@ def download(source, dest=None):
         ssh.load_system_host_keys()
         ssh.set_missing_host_key_policy(AutoAddPolicy())
 
-        url = urlparse(source['url'])
+        url = urlsplit(source['url'])
         username = url.username
         # Use the current user if one was not specified
         if not username:
@@ -73,7 +73,7 @@ def upload(source, dest):
     @return: True if upload is successful. Otherwise False.
     """
 
-    url = urlparse(dest['url'])
+    url = urlsplit(dest['url'])
 
     try:
         ssh = SSHClient()
@@ -87,12 +87,17 @@ def upload(source, dest):
 
         ssh.connect(url.hostname, username=username, password=url.password)
 
-        dest_filename = dest.get('filename', source['name'])
-        dest_path = os.path.join(url.path, dest_filename)
+        if 'filename' in dest:
+            url = urlsplit.urlunsplit(
+                (url.scheme,
+                 url.netloc,
+                 urljoin(url.path, dest['filename'])
+                )
+            )
         scp = SCPClient(ssh.get_transport())
-        scp.put(source['url'], dest_path, recursive=False)  # recursive should be an option in dest dict?
+        scp.put(source['url'], url.path, recursive=True)  # recursive should be an option in dest dict?
         ssh.close()
-    except:
-        LOG.error("Could not SCP file %s to destination %s on %s as user %s",
-                  source['url'], dest_path, dest.hostname, username)
+    except Exception as e:
+        LOG.error("Could not SCP file %s to destination %s on %s as user %s: %s",
+                  source['url'], dest.path, dest.hostname, username, e)
         raise
