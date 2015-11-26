@@ -216,17 +216,17 @@ def _normalize_occurrence(file_path, taxon_name):
         # skip the header
         next(csv_reader)
         for row in csv_reader:
-            lon = row[1]
-            lat = row[2]
-            uncertainty = row[3]
-            date = row[4]
-            year = row[5]
-            month = row[6]
+            lon = row[0]
+            lat = row[1]
+            uncertainty = row[2]
+            date = row[3]
+            year = row[4]
+            month = row[5]
 
             # TODO: isn't there a builtin for this?
             if not _is_number(lon) or not _is_number(lat):
                 continue
-
+            # one of our filters returned true (shouldn't happen?)
             if 'true' in row[7:]:
                 continue
 
