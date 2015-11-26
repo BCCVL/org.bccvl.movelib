@@ -5,6 +5,7 @@ import tempfile
 from urlparse import urlsplit
 import warnings
 
+# TODO: implement sftp, so that ssh can be used as source
 
 SERVICES = {}
 
