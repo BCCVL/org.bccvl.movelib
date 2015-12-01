@@ -1,8 +1,8 @@
-from contextlib import closing
 import logging
 import os
 import requests
-from urlparse import urlparse
+import tempfile
+from urlparse import urlsplit
 
 
 PROTOCOLS = ('http', 'https')
@@ -25,10 +25,14 @@ def download(source, dest=None):
     """
     response = None
     try:
-        srcurl = urlparse(source['url'])
+        srcurl = urlsplit(source['url'])
         if os.path.exists(dest) and os.path.isdir(dest):
             filename = os.path.basename(srcurl.path)
-            dest_path = os.path.join(dest, filename)
+            if filename:
+                dest_path = os.path.join(dest, filename)
+            else:
+                fd, dest_path = tempfile.mkstemp(dir=dest)
+                filename = os.path.basename(dest_path)
         else:
             filename = os.path.basename(dest)
             dest_path = dest
@@ -38,7 +42,8 @@ def download(source, dest=None):
         verify = source.get('verify', None)
 
         s = requests.Session()
-        s.cookies.set(**cookie)
+        if cookie:
+            s.cookies.set(**cookie)
 
         response = s.get(source['url'], stream=True, verify=verify)
         # raise exception case of error
@@ -50,10 +55,12 @@ def download(source, dest=None):
                 if chunk:  # filter out keep-alive new chunks
                     f.write(chunk)
 
-        htmlfile = {'url' : dest_path,
-                    'name': filename,
-                    'content_type': response.headers.get('Content-Type')
-                   }
+        # TODO: check content-disposition header for filename?
+        htmlfile = {
+            'url': dest_path,
+            'name': filename,
+            'content_type': response.headers.get('Content-Type')
+        }
         return [htmlfile]
     except Exception as e:
         LOG.error("Could not download file: %s: %s", source['url'], e)
