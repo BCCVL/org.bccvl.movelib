@@ -44,12 +44,18 @@ def download(source, dest=None):
 
         # Download file to a local temporary file if a local file path is not specified.
         if not dest:
-            dest = tempfile.mkstemp()
+            dest = tempfile.mkdtemp()
 
         if os.path.exists(dest) and os.path.isdir(dest):
-            dest = os.path.join(dest, 'tmp_move_file')
+            # TODO: we should somehow support scp://dir to scp://dir
+            # get filename from source
+            filename = os.path.basename(url.path)
+            if not filename:
+                fd, dest = tempfile.mkstemp(dir=dest)
+            else:
+                dest = os.path.join(dest, filename)
 
-        scp.get(url.path, dest, recursive=True)
+        scp.get(url.path, dest, recursive=False)
         ssh.close()
 
         outputfile = { 'url' : dest,
@@ -99,5 +105,5 @@ def upload(source, dest):
         ssh.close()
     except Exception as e:
         LOG.error("Could not SCP file %s to destination %s on %s as user %s: %s",
-                  source['url'], dest.path, dest.hostname, username, e)
+                  source['url'], url.path, url.hostname, username, e)
         raise
