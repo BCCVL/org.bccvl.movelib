@@ -3,6 +3,7 @@ from time import time
 import socket
 import struct
 import hashlib
+from urllib import quote
 from urlparse import urlsplit
 
 
@@ -34,7 +35,7 @@ class AuthTkt(object):
         return c
 
     def cookie_value(self):
-        parts = ['%s%08x%s' % (self._digest(), self.ts, self.uid)]
+        parts = ['%s%08x%s' % (self._digest(), self.ts, quote(self.uid))]
         if self.tokens:
             parts.append(self.tokens)
         parts.append(self.data)
