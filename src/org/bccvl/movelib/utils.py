@@ -17,6 +17,8 @@ class AuthTkt(object):
         self.tokens = ','.join(tok.strip() for tok in tokens)
         self.base64 = base64
         self.ts = int(time() if ts is None else ts)
+        # TODO: make configurable
+        self.hashalg = 'md5'
 
     def ticket(self):
         v = self.cookie_value()
