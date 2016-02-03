@@ -9,7 +9,7 @@ import warnings
 
 SERVICES = {}
 
-for service in ('ala', 'http', 'scp', 'swift', 'file'):
+for service in ('ala', 'gbif', 'http', 'scp', 'swift', 'file'):
     try:
         module = importlib.import_module(
             '{0}.{1}.{2}'.format(__name__, 'protocol', service))
