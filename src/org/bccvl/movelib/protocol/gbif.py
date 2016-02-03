@@ -95,8 +95,7 @@ def _download_occurrence_by_lsid(lsid, dest):
                     # TODO: isn't there a builtin for this?
                     if not _is_number(row['decimalLongitude']) or not _is_number(row['decimalLatitude']):
                         continue
-
-                    data.append([row['species'], row['decimalLongitude'], row['decimalLatitude'], '', row['eventDate'], row['year'], row['month']) 
+                    data.append([row['species'], row['decimalLongitude'], row['decimalLatitude'], '', row['eventDate'], row['year'], row['month']]) 
             os.remove(temp_file)
 
         rowCount = len(data)
@@ -109,7 +108,7 @@ def _download_occurrence_by_lsid(lsid, dest):
             csv_writer = csv.writer(csv_file)
             csv_writer.writerows(data)
        
-    except Exception e:
+    except Exception as e:
         LOG.error("Fail to download occurrence records from GBIF, %s", e)
         raise
     finally:
@@ -118,7 +117,7 @@ def _download_occurrence_by_lsid(lsid, dest):
 
     return { 'url' : os.path.join(dest, 'gbif_occurrence.csv'),
              'name': 'gbif_occurrence.csv',
-             'content_type': 'text/csv'.
+             'content_type': 'text/csv',
              'count': rowCount - 1}
 
 
