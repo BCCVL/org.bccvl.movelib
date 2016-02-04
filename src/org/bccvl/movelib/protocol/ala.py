@@ -90,6 +90,7 @@ def _download_occurrence_by_lsid(lsid, dest):
         LOG.error("Cannot find file %s in downloaded zip file", 'data.csv')
         raise
     except Exception:
+        # TODO: Not a zip file error.... does it have to raise?
         LOG.error("The file %s is not a zip file", 'data.csv')
         raise
     finally:
@@ -211,7 +212,7 @@ def _normalize_occurrence(file_path, taxon_name):
     # Build the normalized CSV in memory, order needs to match whatever ala returns
     new_csv = [[SPECIES, LONGITUDE, LATITUDE, UNCERTAINTY, EVENT_DATE, YEAR, MONTH]]
 
-    with io.open(file_path, mode='r+') as csv_file:
+    with io.open(file_path, mode='br+') as csv_file:
         csv_reader = csv.reader(csv_file)
 
         # skip the header
