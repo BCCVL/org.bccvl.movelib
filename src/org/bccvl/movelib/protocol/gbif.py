@@ -22,7 +22,7 @@ MONTH = 'month'
 # for GBIF, lsid is the speciesKey
 settings = {
     "metadata_url" : "http://api.gbif.org/v1/species/{lsid}",
-    "occurrence_url" : "http://api.gbif.org/v1/occurrence/search?datasetKey=d7dddbf4-2cf0-4f39-9b2a-bb099caae36c&taxonKey={lsid}&offset={offset}&limit={limit}"
+    "occurrence_url" : "http://api.gbif.org/v1/occurrence/search?taxonKey={lsid}&offset={offset}&limit={limit}"
 }
 
 """
@@ -88,14 +88,15 @@ def _download_occurrence_by_lsid(lsid, dest):
             occurrence_url = settings['occurrence_url'].format(lsid=lsid, offset=offset, limit=limit)
             temp_file, _ = urllib.urlretrieve(occurrence_url)
             with open(temp_file) as f:
-                t1 = json.load(temp_file)
+                t1 = json.load(f)
                 count = t1['count']
                 offset += t1['limit']
                 for row in t1['results']:
-                    # TODO: isn't there a builtin for this?
-                    if not _is_number(row['decimalLongitude']) or not _is_number(row['decimalLatitude']):
+                    # TODO: isn't there a builtin for this? 
+                    if not row.has_key('decimalLongitude') or not row.has_key('decimalLatitude') or \
+                       not _is_number(row['decimalLongitude']) or not _is_number(row['decimalLatitude']):
                         continue
-                    data.append([row['species'], row['decimalLongitude'], row['decimalLatitude'], '', row['eventDate'], row['year'], row['month']]) 
+                    data.append([row['species'], row['decimalLongitude'], row['decimalLatitude'], '', row.get('eventDate', ''), row.get('year', ''), row.get('month', '')]) 
             os.remove(temp_file)
 
         rowCount = len(data)
@@ -118,7 +119,7 @@ def _download_occurrence_by_lsid(lsid, dest):
     return { 'url' : os.path.join(dest, 'gbif_occurrence.csv'),
              'name': 'gbif_occurrence.csv',
              'content_type': 'text/csv',
-             'count': rowCount - 1}
+             'count': rowCount - 1 }
 
 
 def _download_metadata_for_lsid(lsid, dest):
@@ -180,7 +181,7 @@ def _gbif_postprocess(csvfile, mdfile, lsid, dest, csvRowCount):
         ],
         'provenance': {
             'source': 'GBIF',
-            'url': settings['occurrence_url'].format(lsid=lsid),
+            'url': settings['occurrence_url'].format(lsid=lsid, offset=0, limit=300),
             'source_date': imported_date
         }
     }
