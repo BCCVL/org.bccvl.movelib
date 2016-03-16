@@ -61,7 +61,8 @@ class AuthTkt(object):
 def get_cookies(settings, userid):
     if not settings.get('secret'):
         return {}
-    ticket = AuthTkt(settings['secret'], userid)
+    tokens = [tok.strip() for tok in settings.get('tokens', '').split()]
+    ticket = AuthTkt(settings['secret'], userid, tokens=tokens)
     return {
         'name': settings['name'],
         'value': ticket.ticket(),
