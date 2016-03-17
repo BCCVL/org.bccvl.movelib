@@ -60,6 +60,11 @@ def download(source, dest=None):
         LOG.error("Failed to download occurrence data with lsid '{0}': {1}".format(lsid, e))
         raise
 
+def _zip_occurrence_data(occzipfile, data_folder_path):
+    with zipfile.ZipFile(occzipfile, 'w') as zf:
+        zf.write(os.path.join(data_folder_path, 'ala_occurrence.csv'), 'data/ala_occurrence.csv')
+        zf.write(os.path.join(data_folder_path, 'ala_citation.csv'), 'data/ala_citation.csv')
+
 
 def _download_occurrence_by_lsid(lsid, dest):
     """
@@ -84,8 +89,17 @@ def _download_occurrence_by_lsid(lsid, dest):
         with zipfile.ZipFile(temp_file) as z:
             z.extract('data.csv', dest)
             # rename to ala_occurrence.csv
+            data_dest = os.path.join(dest, 'data')
+            os.mkdir(data_dest)
             os.rename(os.path.join(dest, 'data.csv'),
-                      os.path.join(dest, 'ala_occurrence.csv'))
+                      os.path.join(data_dest, 'ala_occurrence.csv'))
+            z.extract('citation.csv', dest)
+            os.rename(os.path.join(dest, 'citation.csv'),
+                      os.path.join(data_dest, 'ala_citation.csv'))
+
+        # Zip it out
+        _zip_occurrence_data(os.path.join(dest, 'ala_occurrence.zip'), os.path.join(dest, 'data'))
+
     except KeyError:
         LOG.error("Cannot find file %s in downloaded zip file", 'data.csv')
         raise
@@ -97,10 +111,9 @@ def _download_occurrence_by_lsid(lsid, dest):
         if temp_file:
             os.remove(temp_file)
 
-    return { 'url' : os.path.join(dest, 'ala_occurrence.csv'),
-             'name': 'ala_occurrence.csv',
-             'content_type': 'text/csv'}
-
+    return { 'url' : os.path.join(dest, 'ala_occurrence.zip'),
+             'name': 'ala_occurrence.zip',
+             'content_type': 'application/zip'}
 
 def _download_metadata_for_lsid(lsid, dest):
     """Download metadata for lsid from ALA
@@ -122,7 +135,7 @@ def _download_metadata_for_lsid(lsid, dest):
              'content_type': 'application/json'}
 
 
-def _ala_postprocess(csvfile, mdfile, lsid, dest):
+def _ala_postprocess(csvzipfile, mdfile, lsid, dest):
     # cleanup occurrence csv file and generate dataset metadata
 
     # Generate dataset .json
@@ -142,8 +155,13 @@ def _ala_postprocess(csvfile, mdfile, lsid, dest):
             break
 
     # 2. clean up occurrence csv file and count occurrence points
+    csvfile = os.path.join(dest, 'data/ala_occurrence.csv')
     num_occurrences = _normalize_occurrence(csvfile, taxon_name)
 
+    # Rebuild the zip archive file with updated occurrence csv file.
+    os.remove(csvzipfile)
+    _zip_occurrence_data(csvzipfile, os.path.join(os.path.dirname(csvzipfile), 'data'))
+    
     # 3. generate ala_dataset.json
     imported_date = datetime.datetime.now().strftime('%d/%m/%Y')
     if common_name:
@@ -159,9 +177,9 @@ def _ala_postprocess(csvfile, mdfile, lsid, dest):
         'num_occurrences': num_occurrences,
         'files': [
             {
-                'url': csvfile,
+                'url': csvzipfile,
                 'dataset_type': 'occurrence',
-                'size': os.path.getsize(csvfile)
+                'size': os.path.getsize(csvzipfile)
             },
             {
                 'url': mdfile,
