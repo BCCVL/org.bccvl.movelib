@@ -38,7 +38,7 @@ def download(source, dest=None):
         if not username:
             username = pwd.getpwuid(os.getuid())[0]
 
-        ssh.connect(url.hostname, username=username, password=url.password)
+        ssh.connect(url.hostname, port=url.port or 22, username=username, password=url.password)
 
         scp = SCPClient(ssh.get_transport())
 
@@ -91,7 +91,7 @@ def upload(source, dest):
         if not username:
             username = pwd.getpwuid(os.getuid())[0]
 
-        ssh.connect(url.hostname, username=username, password=url.password)
+        ssh.connect(url.hostname, port=url.port or 22, username=username, password=url.password)
 
         if 'filename' in dest:
             url = urlsplit.urlunsplit(
