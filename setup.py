@@ -32,6 +32,7 @@ setup(
         'scp': ['paramiko', 'scp'],
         'swift': ['python-swiftclient', 'python-keystoneclient'],
         'http': ['requests'],
+        'test': ['paramiko', 'scp', 'python-swiftclient', 'python-keystoneclient', 'requests'],
     },
 
 )

@@ -26,8 +26,8 @@ def validate(url):
     # check that container and file are specified in swift url.
     # i.e. swift://host:port/v1/account/container/path/to/file
     path_tokens = url.path.split('/', 4)
-    # verify existence of version, account and container
-    return (url.scheme in PROTOCOLS and len(path_tokens) >= 4 and len(path_tokens[3]) > 0)
+    # verify existence of version, account, container and object
+    return (url.scheme in PROTOCOLS and len(path_tokens) >= 4 and len(path_tokens[3]) >= 0)
 
 
 def download(source, dest=None):
@@ -41,7 +41,7 @@ def download(source, dest=None):
     """
 
     if not dest:
-        dest = tempfile.mkstepm()
+        dest = tempfile.mkstemp()
 
     url = urlsplit(source['url'])
     _, ver, account, container, object_name = url.path.split('/', 4)
@@ -60,8 +60,9 @@ def download(source, dest=None):
     try:
         swift = SwiftService(swift_opts)
         filelist = []
+
         if os.path.exists(dest) and os.path.isdir(dest):
-            outfilename = os.path.join(dest, 'tmp_move_file')
+            outfilename = os.path.join(dest, os.path.basename(object_name))
         else:
             outfilename = dest
         for result in swift.download(container, [object_name], {'out_file': outfilename}):
