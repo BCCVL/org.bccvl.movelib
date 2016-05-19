@@ -16,7 +16,7 @@ class AekosTest(unittest.TestCase):
     }
 
     traits_source = {
-        'url': 'aekos://traits?speciesName=Leersia%20hexandra'
+        'url': 'aekos://traits?speciesName=Leersia%20hexandra&envVarName=windSpeedDirection&envVarName=soilPh_10cm&traitName=totalLength&traitName=cover'
     }
 
     def setUp(self):
