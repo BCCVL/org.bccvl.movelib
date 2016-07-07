@@ -3,7 +3,7 @@ import logging
 import os
 import pwd
 import tempfile
-from urlparse import urlsplit, urljoin
+from urlparse import urlsplit, urlunsplit
 
 from paramiko import SSHClient, AutoAddPolicy
 from scp import SCPClient, SCPException
@@ -94,12 +94,14 @@ def upload(source, dest):
         ssh.connect(url.hostname, port=url.port or 22, username=username, password=url.password)
 
         if 'filename' in dest:
-            url = urlsplit.urlunsplit(
+            url = urlsplit(urlunsplit(
                 (url.scheme,
                  url.netloc,
-                 urljoin(url.path, dest['filename'])
+                 os.path.join(url.path, dest['filename']),
+                 url.query,
+                 url.fragment
                 )
-            )
+            ))
         scp = SCPClient(ssh.get_transport())
         scp.put(source['url'], url.path, recursive=True)  # recursive should be an option in dest dict?
         ssh.close()
