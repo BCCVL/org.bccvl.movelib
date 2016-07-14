@@ -35,6 +35,7 @@ class GBIFTest(unittest.TestCase):
                         dest)
             return (dest, None)
 
+    @unittest.skip("not yet implemented")
     @mock.patch('urllib.urlretrieve')
     def test_gbif_to_file(self, mock_urlretrieve=None):
         mock_urlretrieve.side_effect = self._urlretrieve
