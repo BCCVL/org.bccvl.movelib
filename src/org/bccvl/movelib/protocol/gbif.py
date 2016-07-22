@@ -5,7 +5,9 @@ import json
 import logging
 import os
 import tempfile
+import zipfile
 import urllib
+import shutil
 from urlparse import urlparse, parse_qs
 
 
@@ -22,7 +24,8 @@ MONTH = 'month'
 # for GBIF, lsid is the speciesKey
 settings = {
     "metadata_url" : "http://api.gbif.org/v1/species/{lsid}",
-    "occurrence_url" : "http://api.gbif.org/v1/occurrence/search?taxonKey={lsid}&offset={offset}&limit={limit}"
+    "occurrence_url" : "http://api.gbif.org/v1/occurrence/search?taxonKey={lsid}&offset={offset}&limit={limit}",
+    "dataset_url": "http://api.gbif.org/v1/dataset/{datasetkey}"
 }
 
 """
@@ -61,6 +64,10 @@ def download(source, dest=None):
         LOG.error("Failed to download occurrence data with lsid '{0}': {1}".format(lsid, e))
         raise
 
+def _zip_occurrence_data(occzipfile, data_folder_path):
+    with zipfile.ZipFile(occzipfile, 'w') as zf:
+        zf.write(os.path.join(data_folder_path, 'gbif_occurrence.csv'), 'data/gbif_occurrence.csv')
+        zf.write(os.path.join(data_folder_path, 'gbif_citation.txt'), 'data/gbif_citation.txt')
 
 def _download_occurrence_by_lsid(lsid, dest):
     """
@@ -82,6 +89,8 @@ def _download_occurrence_by_lsid(lsid, dest):
     count = 20
     data = [[SPECIES, LONGITUDE, LATITUDE, UNCERTAINTY, EVENT_DATE, YEAR, MONTH]]
     keys = ['species', 'decimalLongitude', 'decimalLatitude', 'eventDate', 'year', 'month']
+    datasetkeys = []
+    data_dest = os.path.join(dest, 'data')  
 
     try:
         while offset < count:
@@ -96,6 +105,9 @@ def _download_occurrence_by_lsid(lsid, dest):
                     if not row.has_key('decimalLongitude') or not row.has_key('decimalLatitude') or \
                        not _is_number(row['decimalLongitude']) or not _is_number(row['decimalLatitude']):
                         continue
+                    # save the dataset key
+                    if row['datasetKey'] not in datasetkeys:
+                        datasetkeys.append(row['datasetKey'])
                     data.append([row['species'], row['decimalLongitude'], row['decimalLatitude'], '', row.get('eventDate', ''), row.get('year', ''), row.get('month', '')]) 
             os.remove(temp_file)
 
@@ -104,23 +116,49 @@ def _download_occurrence_by_lsid(lsid, dest):
             # Everything was filtered out!
             raise Exception('No valid occurrences left.')
 
-         # Write data as a CSV file
-        with io.open(os.path.join(dest, 'gbif_occurrence.csv'), mode='wb') as csv_file:
+        # Write data as a CSV file
+        os.mkdir(data_dest)
+        with io.open(os.path.join(data_dest, 'gbif_occurrence.csv'), mode='wb') as csv_file:
             csv_writer = csv.writer(csv_file)
             csv_writer.writerows(data)
-       
+
+        # Get citation for each dataset from the dataset details
+        _get_dataset_citation(datasetkeys, os.path.join(data_dest, 'gbif_citation.txt'))
+        _zip_occurrence_data(os.path.join(dest, 'gbif_occurrence.zip'), data_dest) 
+
     except Exception as e:
         LOG.error("Fail to download occurrence records from GBIF, %s", e)
         raise
     finally:
         if os.path.exists(temp_file):
             os.remove(temp_file)
+        if os.path.exists(data_dest):
+            shutil.rmtree(data_dest)
 
-    return { 'url' : os.path.join(dest, 'gbif_occurrence.csv'),
-             'name': 'gbif_occurrence.csv',
-             'content_type': 'text/csv',
+    return { 'url' : os.path.join(dest, 'gbif_occurrence.zip'),
+             'name': 'gbif_occurrence.zip',
+             'content_type': 'application/zip',
              'count': rowCount - 1 }
 
+def _get_dataset_citation(dskeylist, destfilepath):
+    """Download dataset details to extract the citation record for each dataset.
+    """
+    try:
+        with open(destfilepath, 'w') as citfile:
+            for key in dskeylist:
+                dataset_url = settings['dataset_url'].format(datasetkey=key)
+                f = urllib.urlopen(dataset_url)
+                data = json.load(f)
+                citation = data.get('citation', {}).get('text')
+                if citation:
+                    citfile.write(citation + '\n')
+                f.close()
+                f = None 
+    except Exception as e:
+        LOG.error("Fail to download dataset citations from GBIF: %s", e)
+        raise
+    finally:
+        f = None
 
 def _download_metadata_for_lsid(lsid, dest):
     """Download metadata for lsid from GBIF
@@ -143,7 +181,7 @@ def _download_metadata_for_lsid(lsid, dest):
 
 
 def _gbif_postprocess(csvfile, mdfile, lsid, dest, csvRowCount):
-    # cleanup occurrence csv file and generate dataset metadata
+    # Generate dataset metadata. csvfile is a zip file of occurrence csv file and citation file.
 
     # Generate dataset .json
     # 1. read mdfile and find interesting bits:
@@ -168,7 +206,7 @@ def _gbif_postprocess(csvfile, mdfile, lsid, dest, csvRowCount):
         'num_occurrences': num_occurrences,
         'files': [
             {
-                'url': csvfile,
+                'url': csvfile,                 # This is a zip file
                 'dataset_type': 'occurrence',
                 'size': os.path.getsize(csvfile)
             },
