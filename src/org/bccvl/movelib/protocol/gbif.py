@@ -8,6 +8,7 @@ import tempfile
 import zipfile
 import urllib
 import shutil
+import codecs
 from urlparse import urlparse, parse_qs
 
 
@@ -144,7 +145,8 @@ def _get_dataset_citation(dskeylist, destfilepath):
     """Download dataset details to extract the citation record for each dataset.
     """
     try:
-        with open(destfilepath, 'w') as citfile:
+        # save as utf-8 file
+        with codecs.open(destfilepath, 'w', 'utf-8') as citfile:
             for key in dskeylist:
                 dataset_url = settings['dataset_url'].format(datasetkey=key)
                 f = urllib.urlopen(dataset_url)
