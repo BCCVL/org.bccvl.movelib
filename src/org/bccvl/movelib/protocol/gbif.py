@@ -49,7 +49,6 @@ def download(source, dest=None):
     @type local_dest_dir: str
     @return: True and a list of file downloaded if successful. Otherwise False.
     """
-
     url = urlparse(source['url'])
     lsid = parse_qs(url.query)['lsid'][0]
 
@@ -91,7 +90,7 @@ def _download_occurrence_by_lsid(lsid, dest):
     data = [[SPECIES, LONGITUDE, LATITUDE, UNCERTAINTY, EVENT_DATE, YEAR, MONTH]]
     keys = ['species', 'decimalLongitude', 'decimalLatitude', 'eventDate', 'year', 'month']
     datasetkeys = []
-    data_dest = os.path.join(dest, 'data')  
+    data_dest = os.path.join(dest, 'data')
 
     try:
         while offset < count:
@@ -102,14 +101,14 @@ def _download_occurrence_by_lsid(lsid, dest):
                 count = t1['count']
                 offset += t1['limit']
                 for row in t1['results']:
-                    # TODO: isn't there a builtin for this? 
+                    # TODO: isn't there a builtin for this?
                     if not row.has_key('decimalLongitude') or not row.has_key('decimalLatitude') or \
                        not _is_number(row['decimalLongitude']) or not _is_number(row['decimalLatitude']):
                         continue
                     # save the dataset key
                     if row['datasetKey'] not in datasetkeys:
                         datasetkeys.append(row['datasetKey'])
-                    data.append([row['species'], row['decimalLongitude'], row['decimalLatitude'], '', row.get('eventDate', ''), row.get('year', ''), row.get('month', '')]) 
+                    data.append([row['species'], row['decimalLongitude'], row['decimalLatitude'], '', row.get('eventDate', ''), row.get('year', ''), row.get('month', '')])
             os.remove(temp_file)
 
         rowCount = len(data)
@@ -125,7 +124,7 @@ def _download_occurrence_by_lsid(lsid, dest):
 
         # Get citation for each dataset from the dataset details
         _get_dataset_citation(datasetkeys, os.path.join(data_dest, 'gbif_citation.txt'))
-        _zip_occurrence_data(os.path.join(dest, 'gbif_occurrence.zip'), data_dest) 
+        _zip_occurrence_data(os.path.join(dest, 'gbif_occurrence.zip'), data_dest)
 
     except Exception as e:
         LOG.error("Fail to download occurrence records from GBIF, %s", e)
@@ -155,7 +154,7 @@ def _get_dataset_citation(dskeylist, destfilepath):
                 if citation:
                     citfile.write(citation + '\n')
                 f.close()
-                f = None 
+                f = None
     except Exception as e:
         LOG.error("Fail to download dataset citations from GBIF: %s", e)
         raise
