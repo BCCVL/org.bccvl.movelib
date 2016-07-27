@@ -11,10 +11,19 @@ import urllib
 from urlparse import urlparse, parse_qs
 import zipfile
 
+SPECIES = 'species'
+LONGITUDE = 'lon'
+LATITUDE = 'lat'
+UNCERTAINTY = 'uncertainty'
+EVENT_DATE = 'date'
+YEAR = 'year'
+MONTH = 'month'
+CITATION = 'citation'
+
 PROTOCOLS = ('aekos',)
 
 SETTINGS = {
-    "occurrence_url" : "http://api.aekos.org.au:8099/v1/speciesData.json?{}",
+    "occurrence_url" : "https://api.aekos.org.au/v1/speciesData.json?{}&row=0",
     "traitdata_url": "http://api.aekos.org.au:8099/v1/traitData.json?{}",
     "environmentdata_url": "http://api.aekos.org.au:8099/v1/environmentData.json?{}",
 }
@@ -49,8 +58,6 @@ def download(source, dest=None):
     if dest is None:
         dest = tempfile.mkdtemp()
 
-    import pdb; pdb.set_trace()
-
     try:
         if service == 'occurrence':
             # build url with params and fetch file
@@ -59,8 +66,8 @@ def download(source, dest=None):
             # TODO: still need to do things like creating zip file, citation file, bccvl dataset info, support NA's in columns
             # TODO: change to requests so that we can actually process http error codes
             temp_file, _ = urllib.urlretrieve(occurrence_url)
-            import pdb; pdb.set_trace()
             csv_file = _process_occurrence_data(temp_file, dest)
+            ds_file = _aekos_postprocess(csv_file['url'], dest, csv_file['count'], csv_file['scientificName'], occurrence_url)
             return csv_file
         elif service == 'traits':
             # build urls for species, traits and envvar download with params and fetch files
@@ -95,22 +102,103 @@ def download(source, dest=None):
 
 
 def _process_occurrence_data(occurrencefile, destdir):
-
+    # Get the occurrence data
+    datadir = os.path.join(destdir, 'data')
+    os.mkdir(datadir)
     occurrdata = json.load(io.open(occurrencefile))
-    csvfile = os.path.join(destdir, 'aekos_occurrence.csv')
-    # TODO: assumes that all objects have the same attributes which will be used as column names
-    # get headers from first object
-    headers = occurrdata[0].keys()
-    # rename latCoord, longCoord
-    headers.remove('latCoord')
-    headers.remove('longCoord')
-    headers.insert(0, 'lon')
-    headers.insert(0, 'lat')
-    with io.open(csvfile, mode='wb') as csv_file:
-        csv_writer = csv.DictWriter(csv_file, fieldnames=headers)
-        csv_writer.writeheader()
-        for item in occurrdata:
-            item['lat'] = item.pop('latCoord')
-            item['lon'] = item.pop('longCoord')
-            csv_writer.writerow(item)
-    return csvfile
+    data = occurrdata['response']
+
+    # Extract valid occurrence records
+    headers = [SPECIES, LONGITUDE, LATITUDE, UNCERTAINTY, EVENT_DATE, YEAR, MONTH, CITATION]
+    count = 0
+    scientificName = ''
+    citationList = []
+    with io.open(os.path.join(datadir, 'aekos_occurrence.csv'), mode='wb') as csv_file:
+        csv_writer = csv.writer(csv_file)
+        csv_writer.writerow(headers)
+        for row in data:
+            # Skip record if location data is not valid.
+            if not row.has_key('decimalLongitude') or not row.has_key('decimalLatitude') or \
+               not _is_number(row['decimalLongitude']) or not _is_number(row['decimalLatitude']):
+                continue
+
+            # Add citation if not already included
+            citation = row.get('bibliographicCitation', '').strip()
+            scientificName = row.get('scientificName', '').strip()
+            if citation and citation not in citationList:
+                citationList.append(row['bibliographicCitation'])
+            csv_writer.writerow([scientificName, row['decimalLongitude'], row['decimalLatitude'], '', row.get('eventDate', ''), row.get('year', ''), row.get('month', ''), citation])
+            count += 1
+
+    if count == 0:
+        # Everything was filtered out!
+        raise Exception('No valid occurrences left.')
+
+    # Save citations as file
+    with io.open(os.path.join(datadir, 'aekos_citation.txt'), mode='wb') as cit_file:
+        for citation in citationList:
+            cit_file.write(citation + '\n');
+
+    # zip occurrence data file and citation file
+    _zip_occurrence_data(os.path.join(destdir, 'aekos_occurrence.zip'), datadir)
+
+    return { 'url' : os.path.join(destdir, 'aekos_occurrence.zip'),
+             'name': 'aekos_occurrence.zip',
+             'content_type': 'application/zip',
+             'count': count,
+             'scientificName': scientificName
+            }
+
+
+def _aekos_postprocess(csvfile, dest, csvRowCount, scientificName, url):
+    # cleanup occurrence csv file and generate dataset metadata
+
+    # Generate dataset .json
+
+    taxon_name = scientificName
+    num_occurrences = csvRowCount
+
+    # 3. generate arkos_dataset.json
+    imported_date = datetime.datetime.now().strftime('%d/%m/%Y')
+    title = "%s occurrences" % (taxon_name)
+    description = "Observed occurrences for %s, imported from AEKOS on %s" % (taxon_name, imported_date)
+
+    aekos_dataset = {
+        'title': title,
+        'description': description,
+        'num_occurrences': num_occurrences,
+        'files': [
+            {
+                'url': csvfile,
+                'dataset_type': 'occurrence',
+                'size': os.path.getsize(csvfile)
+            },
+        ],
+        'provenance': {
+            'source': 'AEKOS',
+            'url': url,
+            'source_date': imported_date
+        }
+    }
+
+    # Write the dataset to a file
+    dataset_path = os.path.join(dest, 'aekos_dataset.json')
+    f = io.open(dataset_path, mode='wb')
+    json.dump(aekos_dataset, f, indent=2)
+    f.close()
+    dsfile = { 'url' : dataset_path,
+               'name': 'aekos_dataset.json',
+               'content_type': 'application/json'}
+    return dsfile
+
+def _zip_occurrence_data(occzipfile, data_folder_path):
+    with zipfile.ZipFile(occzipfile, 'w') as zf:
+        zf.write(os.path.join(data_folder_path, 'aekos_occurrence.csv'), 'data/aekos_occurrence.csv')
+        zf.write(os.path.join(data_folder_path, 'aekos_citation.txt'), 'data/aekos_citation.txt')
+
+def _is_number(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
