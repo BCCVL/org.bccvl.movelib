@@ -12,11 +12,11 @@ from org.bccvl.movelib import move
 class AekosTest(unittest.TestCase):
 
     occurrence_source = {
-        'url': 'aekos://occurrence?speciesName=Leersia%20hexandra'
+        'url': 'aekos://occurrence?speciesName=Abutilon%20fraseri'
     }
 
     traits_source = {
-        'url': 'aekos://traits?speciesName=Leersia%20hexandra&envVarName=windSpeedDirection&envVarName=soilPh_10cm&traitName=totalLength&traitName=cover'
+        'url': 'aekos://traits?speciesName=Abutilon%20fraseri&traitName=lifeForm%2ClifeStage&envenvVarName=aspect%2Cslope%2CelectricalConductivity%2CpH'
     }
 
     def setUp(self):
@@ -44,7 +44,7 @@ class AekosTest(unittest.TestCase):
         #mock_urlretrieve.side_effect = self._urlretrieve
 
         file_dest = {
-            'url': 'file://{}'.format(self.tmpdir)
+            'url': 'file://{0}'.format(self.tmpdir)
         }
         move(self.occurrence_source, file_dest)
         import pdb; pdb.set_trace()
