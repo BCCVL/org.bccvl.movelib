@@ -146,8 +146,10 @@ def _ala_postprocess(csvzipfile, mdfile, lsid, dest):
     common_name = None
     # TODO: is this the correct bit? (see plone dataset import )
     taxon_name = (metadata.get('classification', {}).get('scientificName')
-                  or metadata.get('taxonName', {}).get('nameComplete')
-                  or metadata.get('taxonConcept', {}).get('nameString'))
+                  or metadata.get('taxonConcept', {}).get('nameString')
+                  or metadata.get('taxonConcept', {}).get('nameComplete'))
+    # TODO: Find how to inteprete taxonName, which is a list now.
+    #             or metadata.get('taxonName', [None])[0]
 
     for record in metadata['commonNames']:
         if record['nameString'] is not None:
