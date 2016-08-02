@@ -16,7 +16,7 @@ class AekosTest(unittest.TestCase):
     }
 
     traits_source = {
-        'url': 'aekos://traits?speciesName=Abutilon%20fraseri&traitName=lifeForm%2ClifeStage&envenvVarName=aspect%2Cslope%2CelectricalConductivity%2CpH'
+        'url': 'aekos://traits?speciesName=Abutilon%20fraseri&traitName=lifeForm%2ClifeStage&envVarName=aspect%2Cslope%2CelectricalConductivity%2CpH'
     }
 
     def setUp(self):
