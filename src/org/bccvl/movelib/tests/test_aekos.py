@@ -47,10 +47,14 @@ class AekosTest(unittest.TestCase):
             'url': 'file://{0}'.format(self.tmpdir)
         }
         move(self.occurrence_source, file_dest)
-        import pdb; pdb.set_trace()
 
-        # verify call scp.put
-        # verify ala calls?
+        # Check for these files are created
+        self.assertTrue(os.path.exists(os.path.join(self.tmpdir, 'aekos_metadata.json')))
+        self.assertTrue(os.path.exists(os.path.join(self.tmpdir, 'aekos_dataset.json')))
+        self.assertTrue(os.path.exists(os.path.join(self.tmpdir, 'aekos_occurrence.zip')))
+        self.assertTrue(os.path.exists(os.path.join(self.tmpdir, 'data', 'aekos_occurrence.csv')))
+        self.assertTrue(os.path.exists(os.path.join(self.tmpdir, 'data', 'aekos_citation.txt')))
+
 
     #@mock.patch('urllib.urlretrieve')
     def test_aekos_traits_to_file(self, mock_urlretrieve=None):
@@ -60,7 +64,9 @@ class AekosTest(unittest.TestCase):
             'url': 'file://{}'.format(self.tmpdir)
         }
         move(self.traits_source, file_dest)
-        import pdb; pdb.set_trace()
 
-        # verify call scp.put
-        # verify ala calls?
+        # Check for these files are created
+        self.assertTrue(os.path.exists(os.path.join(self.tmpdir, 'aekos_dataset.json')))
+        self.assertTrue(os.path.exists(os.path.join(self.tmpdir, 'aekos_traits_env.zip')))
+        self.assertTrue(os.path.exists(os.path.join(self.tmpdir, 'data', 'aekos_traits_env.csv')))
+        self.assertTrue(os.path.exists(os.path.join(self.tmpdir, 'data', 'aekos_citation.txt')))

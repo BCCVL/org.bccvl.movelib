@@ -23,13 +23,14 @@ CITATION = 'citation'
 PROTOCOLS = ('aekos',)
 
 SETTINGS = {
-    "occurrence_url" : "https://api.aekos.org.au/v1/speciesData.json?{0}&row=0",
+    "metadata_url": "https://api.aekos.org.au/v1/speciesSummary.json?{0}",
+    "occurrence_url": "https://api.aekos.org.au/v1/speciesData.json?{0}&row=0",
     "traitdata_url": "https://api.aekos.org.au/v1/traitData.json?{0}&row=0",
     "environmentdata_url": "https://api.aekos.org.au/v1/environmentData.json?{0}&row=0",
 }
 
 """
-ALAService used to interface with Atlas of Living Australia (ALA)
+AEKOS-service used to interface with Advanced Ecological Knowledge and Conservation System.
 """
 
 LOG = logging.getLogger(__name__)
@@ -48,7 +49,6 @@ def download(source, dest=None):
     @type local_dest_dir: str
     @return: True and a list of file downloaded if successful. Otherwise False.
     """
-
     url = urlparse(source['url'])
     service = url.netloc
     params = parse_qs(url.query)
@@ -71,7 +71,9 @@ def download(source, dest=None):
             occurrence_url = SETTINGS['occurrence_url'].format(urllib.urlencode(params, True))
             _download_as_file(occurrence_url, occur_file)
             csv_file = _process_occurrence_data(occur_file, dest)
-            ds_file = _aekos_postprocess(csv_file['url'], dest, csv_file['count'], csv_file['scientificName'], occurrence_url)
+            md_file = _download_metadata(params, dest)
+            ds_file = _aekos_postprocess(csv_file['url'], md_file['url'], dest, csv_file['count'], csv_file['scientificName'], occurrence_url)
+            return [ds_file, csv_file, md_file]
         elif service == 'traits':
             # build urls for species, traits and envvar download with params and fetch files
             trait_file = os.path.join(dest, 'trait_data.json')
@@ -88,8 +90,8 @@ def download(source, dest=None):
 
             # create dataset and push to destination
             src_urls = [trait_url, env_url]
-            ds_file = _aekos_postprocess(csv_file['url'], dest, csv_file['count'], csv_file['scientificName'], src_urls)
-        return [ds_file, csv_file]
+            ds_file = _aekos_postprocess(csv_file['url'], None, dest, csv_file['count'], csv_file['scientificName'], src_urls)
+            return [ds_file, csv_file]
     except Exception as e:
         LOG.error("Failed to download {0} data with params '{1}': {2}".format(service, params, e))
         raise
@@ -250,12 +252,31 @@ def _process_occurrence_data(occurrencefile, destdir):
              'scientificName': scientificName
             }
 
+def _download_metadata(params, dest):
+    """Download metadata for species from AEKOS
+    """
+    # Get species metadata
+    md_file = os.path.join(dest, 'aekos_metadata.json')
+    metadata_url = SETTINGS['metadata_url'].format(urllib.urlencode(params, True))
+    try:
+        _download_as_file(metadata_url, md_file)
+    except Exception as e:
+        LOG.error("Could not download occurrence metadata from AEKOS for %s : %s", params, e)
+        raise
 
-def _aekos_postprocess(csvfile, dest, csvRowCount, scientificName, source_url):
+    return { 'url' : md_file,
+             'name': 'aekos_metadata.json',
+             'content_type': 'application/json'}
+
+def _aekos_postprocess(csvfile, mdfile, dest, csvRowCount, scientificName, source_url):
     # cleanup occurrence csv file and generate dataset metadata
     # Generate dataset .json
 
     taxon_name = scientificName
+    if mdfile:
+        md = json.load(open(mdfile, 'r'))
+        taxon_name = md[0]['scientificName'] or scientificName
+
     num_occurrences = csvRowCount
 
     # 3. generate arkos_dataset.json
@@ -263,17 +284,27 @@ def _aekos_postprocess(csvfile, dest, csvRowCount, scientificName, source_url):
     title = "%s occurrences" % (taxon_name)
     description = "Observed occurrences for %s, imported from AEKOS on %s" % (taxon_name, imported_date)
 
+    # Construct file items
+    filelist = [
+                {
+                    'url': csvfile,
+                    'dataset_type': 'occurrence',
+                    'size': os.path.getsize(csvfile)
+                }
+            ]
+
+    if mdfile:
+        filelist.append({
+                            'url': mdfile,
+                            'dataset_type': 'attribution',
+                            'size': os.path.getsize(mdfile)
+                        })
+
     aekos_dataset = {
         'title': title,
         'description': description,
         'num_occurrences': num_occurrences,
-        'files': [
-            {
-                'url': csvfile,
-                'dataset_type': 'occurrence',
-                'size': os.path.getsize(csvfile)
-            }
-        ],
+        'files': filelist,
         'provenance': {
             'source': 'AEKOS',
             'url': source_url,
