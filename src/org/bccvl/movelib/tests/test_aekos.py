@@ -3,6 +3,7 @@ import pkg_resources
 import shutil
 import tempfile
 import unittest
+import filecmp
 
 import mock
 
@@ -12,11 +13,11 @@ from org.bccvl.movelib import move
 class AekosTest(unittest.TestCase):
 
     occurrence_source = {
-        'url': 'aekos://occurrence?speciesName=Abutilon%20fraseri'
+        'url': 'aekos://occurrence?speciesName=Abutilon%20halophilum'
     }
 
     traits_source = {
-        'url': 'aekos://traits?speciesName=Abutilon%20fraseri&traitName=lifeForm%2ClifeStage&envVarName=aspect%2Cslope%2CelectricalConductivity%2CpH'
+        'url': 'aekos://traits?speciesName=Abutilon%20halophilum&traitName=height%2ClifeForm&envVarName=aspect%2CelectricalConductivity'
     }
 
     def setUp(self):
@@ -26,22 +27,21 @@ class AekosTest(unittest.TestCase):
         if self.tmpdir and os.path.exists(self.tmpdir):
             shutil.rmtree(self.tmpdir)
 
-    def _urlretrieve(self, url, dest=None):
+    def _download_as_file(self, url, dest_file):
         # 1. occurrence_url
-        if url.startswith('http://biocache.ala.org.au/ws/occurrences'):
-            temp_file = os.path.join(self.tmpdir, 'ala_data.zip')
-            shutil.copy(pkg_resources.resource_filename(__name__, 'data/ala_data.zip'),
-                        temp_file)
-            return (temp_file, None)  # fd is ignored
+        if url.startswith('https://api.aekos.org.au/v1/speciesData.json'):
+            shutil.copy(pkg_resources.resource_filename(__name__, 'data/aekos_occurrence.json'), dest_file)
         # 2. metadata_url, destpath
-        if url.startswith('http://bie.ala.org.au/ws/species'):
-            shutil.copy(pkg_resources.resource_filename(__name__, 'data/ala_metadata.json'),
-                        dest)
-            return (dest, None)
+        elif url.startswith('https://api.aekos.org.au/v1/speciesSummary.json'):
+            shutil.copy(pkg_resources.resource_filename(__name__, 'data/aekos_metadata.json'), dest_file)
+        elif url.startswith('https://api.aekos.org.au/v1/traitData.json'):
+            shutil.copy(pkg_resources.resource_filename(__name__, 'data/aekos_trait_data.json'), dest_file)
+        elif url.startswith('https://api.aekos.org.au/v1/environmentData.json'):
+            shutil.copy(pkg_resources.resource_filename(__name__, 'data/aekos_env_data.json'), dest_file)
 
-    #@mock.patch('urllib.urlretrieve')
-    def test_aekos_occurrence_to_file(self, mock_urlretrieve=None):
-        #mock_urlretrieve.side_effect = self._urlretrieve
+    @mock.patch('org.bccvl.movelib.protocol.aekos._download_as_file')
+    def test_aekos_occurrence_to_file(self, mock_download_as_file=None):
+        mock_download_as_file.side_effect = self._download_as_file
 
         file_dest = {
             'url': 'file://{0}'.format(self.tmpdir)
@@ -55,10 +55,14 @@ class AekosTest(unittest.TestCase):
         self.assertTrue(os.path.exists(os.path.join(self.tmpdir, 'data', 'aekos_occurrence.csv')))
         self.assertTrue(os.path.exists(os.path.join(self.tmpdir, 'data', 'aekos_citation.txt')))
 
+        # Check file content
+        self.assertTrue(filecmp.cmp(os.path.join(self.tmpdir, 'aekos_metadata.json'), pkg_resources.resource_filename(__name__, 'data/aekos_metadata.json')))
+        self.assertTrue(filecmp.cmp(os.path.join(self.tmpdir, 'data', 'aekos_occurrence.csv'), pkg_resources.resource_filename(__name__, 'data/aekos_occurrence.csv')))
+        self.assertTrue(filecmp.cmp(os.path.join(self.tmpdir, 'data', 'aekos_citation.txt'), pkg_resources.resource_filename(__name__, 'data/aekos_citation.txt')))
 
-    #@mock.patch('urllib.urlretrieve')
-    def test_aekos_traits_to_file(self, mock_urlretrieve=None):
-        #mock_urlretrieve.side_effect = self._urlretrieve
+    @mock.patch('org.bccvl.movelib.protocol.aekos._download_as_file')
+    def test_aekos_traits_to_file(self, mock_download_as_file=None):
+        mock_download_as_file.side_effect = self._download_as_file
 
         file_dest = {
             'url': 'file://{}'.format(self.tmpdir)
@@ -70,3 +74,7 @@ class AekosTest(unittest.TestCase):
         self.assertTrue(os.path.exists(os.path.join(self.tmpdir, 'aekos_traits_env.zip')))
         self.assertTrue(os.path.exists(os.path.join(self.tmpdir, 'data', 'aekos_traits_env.csv')))
         self.assertTrue(os.path.exists(os.path.join(self.tmpdir, 'data', 'aekos_citation.txt')))
+
+        # Check file content
+        self.assertTrue(filecmp.cmp(os.path.join(self.tmpdir, 'data', 'aekos_traits_env.csv'), pkg_resources.resource_filename(__name__, 'data/aekos_traits_env.csv')))
+        self.assertTrue(filecmp.cmp(os.path.join(self.tmpdir, 'data', 'aekos_citation.txt'), pkg_resources.resource_filename(__name__, 'data/aekos_citation.txt')))

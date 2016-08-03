@@ -66,13 +66,12 @@ def download(source, dest=None):
             # build url with params and fetch file
             # create dataset and push to destination
             # TODO: still need to support NA's in columns
-            #import pdb; pdb.set_trace()
             occur_file = os.path.join(dest, 'occurrence_data.json')
             occurrence_url = SETTINGS['occurrence_url'].format(urllib.urlencode(params, True))
             _download_as_file(occurrence_url, occur_file)
             csv_file = _process_occurrence_data(occur_file, dest)
             md_file = _download_metadata(params, dest)
-            ds_file = _aekos_postprocess(csv_file['url'], md_file['url'], dest, csv_file['count'], csv_file['scientificName'], occurrence_url)
+            ds_file = _aekos_postprocess(csv_file['url'], md_file['url'], dest, csv_file['count'], csv_file['scientificName'], 'occurrence', occurrence_url)
             return [ds_file, csv_file, md_file]
         elif service == 'traits':
             # build urls for species, traits and envvar download with params and fetch files
@@ -90,7 +89,7 @@ def download(source, dest=None):
 
             # create dataset and push to destination
             src_urls = [trait_url, env_url]
-            ds_file = _aekos_postprocess(csv_file['url'], None, dest, csv_file['count'], csv_file['scientificName'], src_urls)
+            ds_file = _aekos_postprocess(csv_file['url'], None, dest, csv_file['count'], csv_file['scientificName'], 'traits', src_urls)
             return [ds_file, csv_file]
     except Exception as e:
         LOG.error("Failed to download {0} data with params '{1}': {2}".format(service, params, e))
@@ -157,7 +156,7 @@ def _save_as_csv(citationList, trait_env_data, headers, datadir):
         csv_writer = csv.writer(csv_file)
         csv_writer.writerow([LONGITUDE, LATITUDE, EVENT_DATE] + headers)
         for key, item in trait_env_data.iteritems():
-            row = [key[0], key[1], key[2]] + ([''] * len(headers))
+            row = [item['lon'], item['lat'], key[1]] + ([''] * len(headers))
             for record in item['traits'] + item['variables']:
                 try:    
                     index = headers.index(record['name']) + 3
@@ -165,8 +164,8 @@ def _save_as_csv(citationList, trait_env_data, headers, datadir):
                 except ValueError as e:
                     LOG.info('Skip {} ...'.format(record['name']))
                     continue
-                csv_writer.writerow(row)
-                count += 1
+            csv_writer.writerow(row)
+            count += 1
     return count
 
 
@@ -184,8 +183,8 @@ def _add_trait_env_data(resultfile, fieldname, citationList, trait_env_data):
         # Save the data with date, as it can have multiple records collected at different dates
         valueList = row.get(fieldname, [])      # shall be either traits or variables
         if valueList: 
-            location = (row['decimalLongitude'], row['decimalLatitude'], row.get('eventDate', ''))
-            trait_env_data.setdefault(location, {'traits': [], 'variables': []})[fieldname] = valueList
+            location = (row['locationID'], row.get('eventDate', ''))
+            trait_env_data.setdefault(location, {'lon' :row['decimalLongitude'], 'lat': row['decimalLatitude'], 'traits': [], 'variables': []})[fieldname] = valueList
             _addName(valueList, nameList)
 
             # Add citation if not already included
@@ -199,7 +198,7 @@ def _add_trait_env_data(resultfile, fieldname, citationList, trait_env_data):
 def _addName(recordList, nameList):
     # Add the name of the record if it is not included in the name list yet.
     for record in recordList:
-        name = record.get('name', None)
+        name = record.get('name', '').strip()
         if name and name not in nameList:
             nameList.append(name)
 
@@ -268,7 +267,7 @@ def _download_metadata(params, dest):
              'name': 'aekos_metadata.json',
              'content_type': 'application/json'}
 
-def _aekos_postprocess(csvfile, mdfile, dest, csvRowCount, scientificName, source_url):
+def _aekos_postprocess(csvfile, mdfile, dest, csvRowCount, scientificName, dsType, source_url):
     # cleanup occurrence csv file and generate dataset metadata
     # Generate dataset .json
 
@@ -277,9 +276,7 @@ def _aekos_postprocess(csvfile, mdfile, dest, csvRowCount, scientificName, sourc
         md = json.load(open(mdfile, 'r'))
         taxon_name = md[0]['scientificName'] or scientificName
 
-    num_occurrences = csvRowCount
-
-    # 3. generate arkos_dataset.json
+    # Generate arkos_dataset.json
     imported_date = datetime.datetime.now().strftime('%d/%m/%Y')
     title = "%s occurrences" % (taxon_name)
     description = "Observed occurrences for %s, imported from AEKOS on %s" % (taxon_name, imported_date)
@@ -288,7 +285,7 @@ def _aekos_postprocess(csvfile, mdfile, dest, csvRowCount, scientificName, sourc
     filelist = [
                 {
                     'url': csvfile,
-                    'dataset_type': 'occurrence',
+                    'dataset_type': dsType,
                     'size': os.path.getsize(csvfile)
                 }
             ]
@@ -303,7 +300,7 @@ def _aekos_postprocess(csvfile, mdfile, dest, csvRowCount, scientificName, sourc
     aekos_dataset = {
         'title': title,
         'description': description,
-        'num_occurrences': num_occurrences,
+        'num_occurrences': csvRowCount,
         'files': filelist,
         'provenance': {
             'source': 'AEKOS',
