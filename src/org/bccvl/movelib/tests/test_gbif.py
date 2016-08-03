@@ -3,6 +3,8 @@ import pkg_resources
 import shutil
 import tempfile
 import unittest
+import zipfile
+import filecmp
 
 import mock
 
@@ -24,7 +26,7 @@ class GBIFTest(unittest.TestCase):
 
     def _urlretrieve(self, url, dest=None):
         # 1. occurrence_url
-        if url.startswith('http://api.gbif.org/v1/occurrence'):
+        if url.startswith('http://api.gbif.org/v1/occurrence/search'):
             temp_file = os.path.join(self.tmpdir, 'gbif_occurrence.json')
             shutil.copy(pkg_resources.resource_filename(__name__, 'data/gbif_occurrence.json'),
                         temp_file)
@@ -35,7 +37,7 @@ class GBIFTest(unittest.TestCase):
                         dest)
             return (dest, None)
 
-    @unittest.skip("not yet implemented")
+    #@unittest.skip("not yet implemented")
     @mock.patch('urllib.urlretrieve')
     def test_gbif_to_file(self, mock_urlretrieve=None):
         mock_urlretrieve.side_effect = self._urlretrieve
@@ -49,7 +51,14 @@ class GBIFTest(unittest.TestCase):
         }
         move(self.gbif_source, file_dest)
 
-        # verify call scp.put
-        # verify gbif calls?
+        # Check files are created
         self.assertTrue(os.path.exists(os.path.join(self.tmpdir, 'gbif_dataset.json')))
-        self.assertTrue(os.path.exists(os.path.join(self.tmpdir, 'gbif_occurrence.csv')))
+        self.assertTrue(os.path.exists(os.path.join(self.tmpdir, 'gbif_occurrence.zip')))
+        self.assertTrue(os.path.exists(os.path.join(self.tmpdir, 'gbif_metadata.json')))
+
+        # Check file contents
+        zf = zipfile.ZipFile(os.path.join(self.tmpdir, 'gbif_occurrence.zip'))
+        zf.extractall(self.tmpdir)
+        self.assertTrue(filecmp.cmp(os.path.join(self.tmpdir, 'gbif_metadata.json'), pkg_resources.resource_filename(__name__, 'data/gbif_metadata.json')))
+        self.assertTrue(filecmp.cmp(os.path.join(self.tmpdir, 'data', 'gbif_occurrence.csv'), pkg_resources.resource_filename(__name__, 'data/gbif_occurrence.csv')))
+        self.assertTrue(filecmp.cmp(os.path.join(self.tmpdir, 'data', 'gbif_citation.txt'), pkg_resources.resource_filename(__name__, 'data/gbif_citation.txt')))
