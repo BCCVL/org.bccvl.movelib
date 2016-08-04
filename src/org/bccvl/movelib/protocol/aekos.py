@@ -7,9 +7,11 @@ import os
 import requests
 import shutil
 import tempfile
+import zipfile
+import itertools
 import urllib
 from urlparse import urlparse, parse_qs
-import zipfile
+
 
 SPECIES = 'species'
 LONGITUDE = 'lon'
@@ -156,17 +158,26 @@ def _save_as_csv(citationList, trait_env_data, headers, datadir):
         csv_writer = csv.writer(csv_file)
         csv_writer.writerow([LONGITUDE, LATITUDE, EVENT_DATE] + headers)
         for key, item in trait_env_data.iteritems():
-            row = [item['lon'], item['lat'], key[1]] + ([''] * len(headers))
-            for record in item['traits'] + item['variables']:
-                try:    
-                    index = headers.index(record['name']) + 3
-                    row[index] = record['value']
-                except ValueError as e:
-                    LOG.info('Skip {} ...'.format(record['name']))
-                    continue
-            csv_writer.writerow(row)
-            count += 1
+            for traits, envvars in _product(item['traits'], item['variables']):
+                row = [item['lon'], item['lat'], key[1]] + ([''] * len(headers))
+                for record in (traits + envvars):
+                    try:    
+                        index = headers.index(record['name']) + 3
+                        row[index] = record['value']
+                    except ValueError as e:
+                        LOG.info('Skip {} ...'.format(record['name']))
+                        continue
+                csv_writer.writerow(row)
+                count += 1
     return count
+
+def _product(traitcol, envcol):
+    # return all possible combinations of traits and env variables.
+    if not traitcol:
+        return itertools.product([[]], envcol)
+    if not envcol:
+        return itertools.product(traitcol, [[]])
+    return itertools.product(traitcol, envcol)
 
 
 def _add_trait_env_data(resultfile, fieldname, citationList, trait_env_data):
@@ -180,11 +191,12 @@ def _add_trait_env_data(resultfile, fieldname, citationList, trait_env_data):
            not _is_number(row['decimalLongitude']) or not _is_number(row['decimalLatitude']):
             continue
 
-        # Save the data with date, as it can have multiple records collected at different dates
+        # Save the data with date, as it can have multiple records collected at different dates.
+        # Potentially can have multiple records of traits/env variables for a given date, with different values.
         valueList = row.get(fieldname, [])      # shall be either traits or variables
-        if valueList: 
+        if valueList:
             location = (row['locationID'], row.get('eventDate', ''))
-            trait_env_data.setdefault(location, {'lon' :row['decimalLongitude'], 'lat': row['decimalLatitude'], 'traits': [], 'variables': []})[fieldname] = valueList
+            trait_env_data.setdefault(location, {'lon' :row['decimalLongitude'], 'lat': row['decimalLatitude'], 'traits': [], 'variables': []})[fieldname].append(valueList)
             _addName(valueList, nameList)
 
             # Add citation if not already included
