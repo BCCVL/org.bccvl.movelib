@@ -1,2 +1,2 @@
-include README.md MANIFEST.in LICENSE
+include README.md MANIFEST.in
 recursive-include src *.py *.csv *.json *.zip
