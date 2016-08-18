@@ -1,2 +1,2 @@
 include README.md MANIFEST.in
-recursive-include src *.py *.csv *.json *.zip
+recursive-include src *.py *.csv *.json *.zip *.txt
