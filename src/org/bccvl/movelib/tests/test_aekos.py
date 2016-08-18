@@ -1,5 +1,5 @@
 import os.path
-import pkg_resources
+from pkg_resources import resource_filename
 import shutil
 import tempfile
 import unittest
@@ -30,14 +30,18 @@ class AekosTest(unittest.TestCase):
     def _download_as_file(self, url, dest_file):
         # 1. occurrence_url
         if url.startswith('https://api.aekos.org.au/v1/speciesData.json'):
-            shutil.copy(pkg_resources.resource_filename(__name__, 'data/aekos_occurrence.json'), dest_file)
+            shutil.copy(resource_filename(
+                __name__, 'data/aekos_occurrence.json'), dest_file)
         # 2. metadata_url, destpath
         elif url.startswith('https://api.aekos.org.au/v1/speciesSummary.json'):
-            shutil.copy(pkg_resources.resource_filename(__name__, 'data/aekos_metadata.json'), dest_file)
+            shutil.copy(resource_filename(
+                __name__, 'data/aekos_metadata.json'), dest_file)
         elif url.startswith('https://api.aekos.org.au/v1/traitData.json'):
-            shutil.copy(pkg_resources.resource_filename(__name__, 'data/aekos_trait_data.json'), dest_file)
+            shutil.copy(resource_filename(
+                __name__, 'data/aekos_trait_data.json'), dest_file)
         elif url.startswith('https://api.aekos.org.au/v1/environmentData.json'):
-            shutil.copy(pkg_resources.resource_filename(__name__, 'data/aekos_env_data.json'), dest_file)
+            shutil.copy(resource_filename(
+                __name__, 'data/aekos_env_data.json'), dest_file)
 
     @mock.patch('org.bccvl.movelib.protocol.aekos._download_as_file')
     def test_aekos_occurrence_to_file(self, mock_download_as_file=None):
@@ -49,16 +53,24 @@ class AekosTest(unittest.TestCase):
         move(self.occurrence_source, file_dest)
 
         # Check for these files are created
-        self.assertTrue(os.path.exists(os.path.join(self.tmpdir, 'aekos_metadata.json')))
-        self.assertTrue(os.path.exists(os.path.join(self.tmpdir, 'aekos_dataset.json')))
-        self.assertTrue(os.path.exists(os.path.join(self.tmpdir, 'aekos_occurrence.zip')))
-        self.assertTrue(os.path.exists(os.path.join(self.tmpdir, 'data', 'aekos_occurrence.csv')))
-        self.assertTrue(os.path.exists(os.path.join(self.tmpdir, 'data', 'aekos_citation.txt')))
+        self.assertTrue(os.path.exists(
+            os.path.join(self.tmpdir, 'aekos_metadata.json')))
+        self.assertTrue(os.path.exists(
+            os.path.join(self.tmpdir, 'aekos_dataset.json')))
+        self.assertTrue(os.path.exists(os.path.join(
+            self.tmpdir, 'aekos_occurrence.zip')))
+        self.assertTrue(os.path.exists(os.path.join(
+            self.tmpdir, 'data', 'aekos_occurrence.csv')))
+        self.assertTrue(os.path.exists(os.path.join(
+            self.tmpdir, 'data', 'aekos_citation.txt')))
 
         # Check file content
-        self.assertTrue(filecmp.cmp(os.path.join(self.tmpdir, 'aekos_metadata.json'), pkg_resources.resource_filename(__name__, 'data/aekos_metadata.json')))
-        self.assertTrue(filecmp.cmp(os.path.join(self.tmpdir, 'data', 'aekos_occurrence.csv'), pkg_resources.resource_filename(__name__, 'data/aekos_occurrence.csv')))
-        self.assertTrue(filecmp.cmp(os.path.join(self.tmpdir, 'data', 'aekos_citation.txt'), pkg_resources.resource_filename(__name__, 'data/aekos_citation.txt')))
+        self.assertTrue(filecmp.cmp(os.path.join(self.tmpdir, 'aekos_metadata.json'),
+                                    resource_filename(__name__, 'data/aekos_metadata.json')))
+        self.assertTrue(filecmp.cmp(os.path.join(self.tmpdir, 'data', 'aekos_occurrence.csv'),
+                                    resource_filename(__name__, 'data/aekos_occurrence.csv')))
+        self.assertTrue(filecmp.cmp(os.path.join(self.tmpdir, 'data', 'aekos_citation.txt'),
+                                    resource_filename(__name__, 'data/aekos_citation.txt')))
 
     @mock.patch('org.bccvl.movelib.protocol.aekos._download_as_file')
     def test_aekos_traits_to_file(self, mock_download_as_file=None):
@@ -70,11 +82,17 @@ class AekosTest(unittest.TestCase):
         move(self.traits_source, file_dest)
 
         # Check for these files are created
-        self.assertTrue(os.path.exists(os.path.join(self.tmpdir, 'aekos_dataset.json')))
-        self.assertTrue(os.path.exists(os.path.join(self.tmpdir, 'aekos_traits_env.zip')))
-        self.assertTrue(os.path.exists(os.path.join(self.tmpdir, 'data', 'aekos_traits_env.csv')))
-        self.assertTrue(os.path.exists(os.path.join(self.tmpdir, 'data', 'aekos_citation.txt')))
+        self.assertTrue(os.path.exists(
+            os.path.join(self.tmpdir, 'aekos_dataset.json')))
+        self.assertTrue(os.path.exists(os.path.join(
+            self.tmpdir, 'aekos_traits_env.zip')))
+        self.assertTrue(os.path.exists(os.path.join(
+            self.tmpdir, 'data', 'aekos_traits_env.csv')))
+        self.assertTrue(os.path.exists(os.path.join(
+            self.tmpdir, 'data', 'aekos_citation.txt')))
 
         # Check file content
-        self.assertTrue(filecmp.cmp(os.path.join(self.tmpdir, 'data', 'aekos_traits_env.csv'), pkg_resources.resource_filename(__name__, 'data/aekos_traits_env.csv')))
-        self.assertTrue(filecmp.cmp(os.path.join(self.tmpdir, 'data', 'aekos_citation.txt'), pkg_resources.resource_filename(__name__, 'data/aekos_citation.txt')))
+        self.assertTrue(filecmp.cmp(os.path.join(self.tmpdir, 'data', 'aekos_traits_env.csv'),
+                                    resource_filename(__name__, 'data/aekos_traits_env.csv')))
+        self.assertTrue(filecmp.cmp(os.path.join(self.tmpdir, 'data', 'aekos_citation.txt'),
+                                    resource_filename(__name__, 'data/aekos_citation.txt')))
