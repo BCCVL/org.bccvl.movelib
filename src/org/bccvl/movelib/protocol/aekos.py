@@ -213,8 +213,7 @@ def _add_trait_env_data(resultfile, fieldname, citationList, trait_env_data):
         'params', {}).get(resphdrfield, [])
     for row in results['response']:
         # Skip record if location data is not valid.
-        if not row.has_key('decimalLongitude') or not row.has_key('decimalLatitude') or \
-           not _is_number(row['decimalLongitude']) or not _is_number(row['decimalLatitude']):
+        if 'decimalLongitude' not in row or 'decimalLatitude' not in row:
             continue
 
         # Save the data with date, as it can have multiple records
@@ -268,8 +267,7 @@ def _process_occurrence_data(occurrencefile, destdir):
         csv_writer.writerow(headers)
         for row in data:
             # Skip record if location data is not valid.
-            if not row.has_key('decimalLongitude') or not row.has_key('decimalLatitude') or \
-               not _is_number(row['decimalLongitude']) or not _is_number(row['decimalLatitude']):
+            if 'decimalLongitude' not in row or 'decimalLatitude' not in row:
                 continue
 
             # Add citation if not already included
@@ -384,11 +382,5 @@ def _aekos_postprocess(csvfile, mdfile, dest, csvRowCount,
 def _zip_data_dir(occzipfile, data_folder_path, filelist):
     with zipfile.ZipFile(occzipfile, 'w') as zf:
         for filename in filelist:
-            zf.write(os.path.join(data_folder_path, filename), 'data/{}'.format(filename))
-
-def _is_number(s):
-    try:
-        float(s)
-        return True
-    except ValueError:
-        return False
+            zf.write(os.path.join(data_folder_path, filename),
+                     'data/{}'.format(filename))
