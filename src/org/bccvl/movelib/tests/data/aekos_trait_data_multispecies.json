@@ -1,0 +1,187 @@
+{
+  "responseHeader": {
+    "numFound": 4,
+    "pageNumber": 1,
+    "totalPages": 2147483647,
+    "elapsedTime": 16876,
+    "params": {
+      "start": 0,
+      "rows": 0,
+      "speciesNames": [
+        "Abutilon fraseri",
+        "Abutilon halophilum"
+      ],
+      "traitNames": [
+        "height",
+        "lifeForm"
+      ]
+    }
+  },
+  "response": [
+    {
+      "decimalLatitude": -30.25567976568413,
+      "decimalLongitude": 139.22723064842532,
+      "geodeticDatum": "GDA94",
+      "locationID": "aekos.org.au/collection/adelaide.edu.au/trend/SATFLB0020",
+      "scientificName": "Abutilon halophilum",
+      "individualCount": 1,
+      "eventDate": "2013-08-09",
+      "year": 2013,
+      "month": 8,
+      "bibliographicCitation": "TERN Australian Transect Network, Biomes of Australian Soils Consortium (2015). Transects for Environmental Monitoring and Decision Making (TREND) (2013-2015) and TREND-Biome of Australia Soil Environments (BASE) - Soil samples for physical structure and chemical analysis (14 sites) throughout Australia (2013), Version 11/2015. Persistent Hyperlink: http://www.aekos.org.au/collection/adelaide.edu.au/trend. &#198;KOS Data Portal, rights owned by The University of Adelaide (TERN Australian Transects Network - TREND), Bioplatforms Australia Ltd. Accessed [dd mmm yyyy, e.g. 01 Jan 2016].",
+      "samplingProtocol": "aekos.org.au/collection/adelaide.edu.au/trend",
+      "traits": [
+        {
+          "name": "height",
+          "value": "0.01",
+          "units": "metres"
+        },
+        {
+          "name": "lifeForm",
+          "value": "Forb",
+          "units": ""
+        }
+      ]
+    },
+    {
+      "decimalLatitude": -30.25567976568413,
+      "decimalLongitude": 139.22723064842532,
+      "geodeticDatum": "GDA94",
+      "locationID": "aekos.org.au/collection/adelaide.edu.au/trend/SATFLB0020",
+      "scientificName": "Abutilon halophilum",
+      "individualCount": 1,
+      "eventDate": "2013-08-09",
+      "year": 2013,
+      "month": 8,
+      "bibliographicCitation": "TERN Australian Transect Network, Biomes of Australian Soils Consortium (2015). Transects for Environmental Monitoring and Decision Making (TREND) (2013-2015) and TREND-Biome of Australia Soil Environments (BASE) - Soil samples for physical structure and chemical analysis (14 sites) throughout Australia (2013), Version 11/2015. Persistent Hyperlink: http://www.aekos.org.au/collection/adelaide.edu.au/trend. &#198;KOS Data Portal, rights owned by The University of Adelaide (TERN Australian Transects Network - TREND), Bioplatforms Australia Ltd. Accessed [dd mmm yyyy, e.g. 01 Jan 2016].",
+      "samplingProtocol": "aekos.org.au/collection/adelaide.edu.au/trend",
+      "traits": [
+        {
+          "name": "height",
+          "value": "0.05",
+          "units": "metres"
+        },
+        {
+          "name": "lifeForm",
+          "value": "Forb",
+          "units": ""
+        }
+      ]
+    },
+    {
+      "decimalLatitude": -30.25567976568413,
+      "decimalLongitude": 139.22723064842532,
+      "geodeticDatum": "GDA94",
+      "locationID": "aekos.org.au/collection/adelaide.edu.au/trend/SATFLB0020",
+      "scientificName": "Abutilon halophilum",
+      "individualCount": 1,
+      "eventDate": "2013-08-09",
+      "year": 2013,
+      "month": 8,
+      "bibliographicCitation": "TERN Australian Transect Network, Biomes of Australian Soils Consortium (2015). Transects for Environmental Monitoring and Decision Making (TREND) (2013-2015) and TREND-Biome of Australia Soil Environments (BASE) - Soil samples for physical structure and chemical analysis (14 sites) throughout Australia (2013), Version 11/2015. Persistent Hyperlink: http://www.aekos.org.au/collection/adelaide.edu.au/trend. &#198;KOS Data Portal, rights owned by The University of Adelaide (TERN Australian Transects Network - TREND), Bioplatforms Australia Ltd. Accessed [dd mmm yyyy, e.g. 01 Jan 2016].",
+      "samplingProtocol": "aekos.org.au/collection/adelaide.edu.au/trend",
+      "traits": [
+        {
+          "name": "lifeForm",
+          "value": "Allien",
+          "units": ""
+        },
+        {
+          "name": "height",
+          "value": "0.01",
+          "units": "metres"
+        }
+      ]
+    },
+    {
+      "decimalLatitude": -30.25567976568413,
+      "decimalLongitude": 139.22723064842532,
+      "geodeticDatum": "GDA94",
+      "locationID": "aekos.org.au/collection/adelaide.edu.au/trend/SATFLB0020",
+      "scientificName": "Abutilon halophilum",
+      "individualCount": 1,
+      "eventDate": "2013-08-09",
+      "year": 2013,
+      "month": 8,
+      "bibliographicCitation": "TERN Australian Transect Network, Biomes of Australian Soils Consortium (2015). Transects for Environmental Monitoring and Decision Making (TREND) (2013-2015) and TREND-Biome of Australia Soil Environments (BASE) - Soil samples for physical structure and chemical analysis (14 sites) throughout Australia (2013), Version 11/2015. Persistent Hyperlink: http://www.aekos.org.au/collection/adelaide.edu.au/trend. &#198;KOS Data Portal, rights owned by The University of Adelaide (TERN Australian Transects Network - TREND), Bioplatforms Australia Ltd. Accessed [dd mmm yyyy, e.g. 01 Jan 2016].",
+      "samplingProtocol": "aekos.org.au/collection/adelaide.edu.au/trend",
+      "traits": [
+        {
+          "name": "height",
+          "value": "0.01",
+          "units": "metres"
+        },
+        {
+          "name": "lifeForm",
+          "value": "Forb",
+          "units": ""
+        }
+      ]
+    },
+    {
+      "decimalLatitude": -30.25567976568413,
+      "decimalLongitude": 139.22723064842532,
+      "geodeticDatum": "GDA94",
+      "locationID": "aekos.org.au/collection/adelaide.edu.au/trend/SATFLB0020",
+      "scientificName": "Abutilon halophilum",
+      "individualCount": 1,
+      "eventDate": "2013-10-09",
+      "year": 2013,
+      "month": 8,
+      "bibliographicCitation": "TERN Australian Transect Network, Biomes of Australian Soils Consortium (2015). Transects for Environmental Monitoring and Decision Making (TREND) (2013-2015) and TREND-Biome of Australia Soil Environments (BASE) - Soil samples for physical structure and chemical analysis (14 sites) throughout Australia (2013), Version 11/2015. Persistent Hyperlink: http://www.aekos.org.au/collection/adelaide.edu.au/trend. &#198;KOS Data Portal, rights owned by The University of Adelaide (TERN Australian Transects Network - TREND), Bioplatforms Australia Ltd. Accessed [dd mmm yyyy, e.g. 01 Jan 2016].",
+      "samplingProtocol": "aekos.org.au/collection/adelaide.edu.au/trend",
+      "traits": [
+        {
+          "name": "height",
+          "value": "0.01",
+          "units": "metres"
+        },
+        {
+          "name": "lifeForm",
+          "value": "Forb",
+          "units": ""
+        }
+      ]
+    },
+    {
+      "decimalLatitude": -22.289807726964305,
+      "decimalLongitude": 133.61642229093815,
+      "geodeticDatum": "GDA94",
+      "locationID": "aekos.org.au/collection/adelaide.edu.au/ausplotsrangelands/NTABRT0004",
+      "scientificName": "Abutilon fraseri",
+      "individualCount": 1,
+      "eventDate": "2012-01-22",
+      "year": 2012,
+      "month": 1,
+      "bibliographicCitation": "TERN AusPlots (2013). AusPlots Rangelands, Version 11/2015. Persistent Hyperlink: http://www.aekos.org.au/collection/adelaide.edu.au/ausplotsrangelands. &#198;KOS Data Portal, rights owned by University of Adelaide (http://www.adelaide.edu.au). Accessed [dd mmm yyyy, e.g. 01 Jan 2016].",
+      "samplingProtocol": "aekos.org.au/collection/adelaide.edu.au/ausplotsrangelands",
+      "traits": [
+        {
+          "name": "height",
+          "value": "0.65",
+          "units": "metres"
+        }
+      ]
+    },
+    {
+      "decimalLatitude": -23.90725452210046,
+      "decimalLongitude": 133.74990784098577,
+      "geodeticDatum": "GDA94",
+      "locationID": "aekos.org.au/collection/adelaide.edu.au/ausplotsrangelands/NTAFIN0026",
+      "scientificName": "Abutilon fraseri",
+      "individualCount": 1,
+      "eventDate": "2012-03-13",
+      "year": 2012,
+      "month": 3,
+      "bibliographicCitation": "TERN AusPlots (2013). AusPlots Rangelands, Version 11/2015. Persistent Hyperlink: http://www.aekos.org.au/collection/adelaide.edu.au/ausplotsrangelands. &#198;KOS Data Portal, rights owned by University of Adelaide (http://www.adelaide.edu.au). Accessed [dd mmm yyyy, e.g. 01 Jan 2016].",
+      "samplingProtocol": "aekos.org.au/collection/adelaide.edu.au/ausplotsrangelands",
+      "traits": [
+        {
+          "name": "height",
+          "value": "0.1",
+          "units": "metres"
+        }
+      ]
+    }
+  ]
+}

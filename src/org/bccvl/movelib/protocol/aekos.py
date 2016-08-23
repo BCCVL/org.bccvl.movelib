@@ -85,15 +85,22 @@ def download(source, dest=None):
         elif service == 'traits':
             # build urls for species, traits and envvar download with params
             # and fetch files
-            trait_file = os.path.join(dest, 'trait_data.json')
-            trait_url = SETTINGS['traitdata_url'].format(
-                urllib.urlencode(params, True))
-            _download_as_file(trait_url, trait_file)
+            src_urls =[]
+            trait_file = None
+            if params.get('traitName', None) and params.get('traitName')[0] != 'None':
+                trait_file = os.path.join(dest, 'trait_data.json')
+                trait_url = SETTINGS['traitdata_url'].format(
+                    urllib.urlencode(params, True))
+                _download_as_file(trait_url, trait_file)
+                src_urls.append(trait_url)
 
-            env_file = os.path.join(dest, 'env_data.json')
-            env_url = SETTINGS['environmentdata_url'].format(
-                urllib.urlencode(params, True))
-            _download_as_file(env_url, env_file)
+            env_file = None
+            if params.get('envVarName', None) and params.get('envVarName')[0] != 'None':
+                env_file = os.path.join(dest, 'env_data.json')
+                env_url = SETTINGS['environmentdata_url'].format(
+                    urllib.urlencode(params, True))
+                _download_as_file(env_url, env_file)
+                src_urls.append(env_url)
 
             # Merge traits and environment data to a csv file for
             # traits modelling (may need to add NAs).
@@ -102,10 +109,9 @@ def download(source, dest=None):
             csv_file = _process_trait_env_data(trait_file, env_file, dest)
 
             # create dataset and push to destination
-            src_urls = [trait_url, env_url]
             ds_file = _aekos_postprocess(csv_file['url'], None, dest,
                                          csv_file['count'],
-                                         csv_file['scientificName'],
+                                         csv_file['speciesName'],
                                          'traits', src_urls)
             return [ds_file, csv_file]
     except Exception as e:
@@ -117,7 +123,6 @@ def download(source, dest=None):
         for tmpfile in [occur_file, trait_file, env_file]:
             if tmpfile and os.path.exists(tmpfile):
                 os.remove(tmpfile)
-
 
 def _download_as_file(dataurl, dest_file):
     r = requests.get(dataurl, stream=True)
@@ -136,16 +141,17 @@ def _process_trait_env_data(traitfile, envfile, destdir):
     datadir = os.path.join(destdir, 'data')
     os.mkdir(datadir)
 
-    # Extract the trait data and the env variable data
+    # Extract the trait data and the env variable data.
+    # Possible that no trait data or env variable data.
     traitenvRecords = {}
     citationList = []
-    traitNames, scientificName = _add_trait_env_data(
+    traitNames, speciesNames1 = _add_trait_env_data(
         traitfile, 'traits', citationList, traitenvRecords)
-    envNames, scientificName = _add_trait_env_data(
+    envNames, speciesNames2 = _add_trait_env_data(
         envfile, 'variables', citationList, traitenvRecords)
 
-    if not traitNames or not envNames:
-        raise Exception("No traits or environment variables are found")
+    if not traitNames and not envNames:
+        raise Exception("No traits and environment variables are found")
 
     # Save data as csv file
     headers = traitNames + envNames
@@ -163,7 +169,7 @@ def _process_trait_env_data(traitfile, envfile, destdir):
             'name': zipfilename,
             'content_type': 'application/zip',
             'count': count,
-            'scientificName': scientificName
+            'speciesName':  ','.join(speciesNames1 or speciesNames2)
             }
 
 
@@ -206,9 +212,16 @@ def _product(traitcol, envcol):
 
 
 def _add_trait_env_data(resultfile, fieldname, citationList, trait_env_data):
-    scientificName = ''
+    nameList = []
+
+    # return if there is no result file
+    if not resultfile:
+        return nameList, []
+
     results = json.load(io.open(resultfile))
     resphdrfield = 'traitNames' if fieldname == 'traits' else 'envVarNames'
+    speciesList = results['responseHeader'].get(
+        'params', {}).get('speciesNames', [])
     nameList = results['responseHeader'].get(
         'params', {}).get(resphdrfield, [])
     for row in results['response']:
@@ -236,8 +249,7 @@ def _add_trait_env_data(resultfile, fieldname, citationList, trait_env_data):
             citation = row.get('bibliographicCitation', '').strip()
             if citation and citation not in citationList:
                 citationList.append(row['bibliographicCitation'])
-            scientificName = row.get('scientificName', '')
-    return nameList, scientificName
+    return nameList, speciesList
 
 
 def _addName(recordList, nameList):
@@ -334,11 +346,17 @@ def _aekos_postprocess(csvfile, mdfile, dest, csvRowCount,
         md = json.load(open(mdfile, 'r'))
         taxon_name = md[0]['scientificName'] or scientificName
 
-    # Generate arkos_dataset.json
+    # Generate aekos_dataset.json
     imported_date = datetime.datetime.now().strftime('%d/%m/%Y')
-    title = "%s occurrences" % (taxon_name)
-    description = "Observed occurrences for %s, imported from AEKOS on %s" % (
-        taxon_name, imported_date)
+    if dsType == 'occurrence':
+        title = "%s occurrences" % (taxon_name)
+        description = "Observed occurrences for %s, imported from AEKOS on %s" % (
+            taxon_name, imported_date)
+    else:
+        title = "%s trait and environment variable data" % (taxon_name)
+        description = "Observed trait and environment varaible data for %s, imported from AEKOS on %s" % (
+            taxon_name, imported_date)
+
 
     # Construct file items
     filelist = [
