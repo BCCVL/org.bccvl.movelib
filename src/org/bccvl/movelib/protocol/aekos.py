@@ -28,9 +28,9 @@ PROTOCOLS = ('aekos',)
 
 SETTINGS = {
     "metadata_url": "https://api.aekos.org.au/v1/speciesSummary.json?{0}",
-    "occurrence_url": "https://api.aekos.org.au/v1/speciesData.json?{0}&row=0",
-    "traitdata_url": "https://api.aekos.org.au/v1/traitData.json?{0}&row=0",
-    "environmentdata_url": "https://api.aekos.org.au/v1/environmentData.json?{0}&row=0",
+    "occurrence_url": "https://api.aekos.org.au/v1/speciesData.json?{0}&rows=0",
+    "traitdata_url": "https://api.aekos.org.au/v1/traitData.json?{0}&rows=0",
+    "environmentdata_url": "https://api.aekos.org.au/v1/environmentData.json?{0}&rows=0",
 }
 
 """
