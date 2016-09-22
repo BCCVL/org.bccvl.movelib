@@ -1,5 +1,4 @@
 import csv
-import datetime
 import io
 import json
 import logging
@@ -11,6 +10,7 @@ import zipfile
 import itertools
 import urllib
 from urlparse import urlparse, parse_qs
+from datetime import datetime
 
 
 SPECIES = 'species'
@@ -21,6 +21,8 @@ EVENT_DATE = 'date'
 YEAR = 'year'
 MONTH = 'month'
 CITATION = 'citation'
+METADATA = 'metadata'
+LOCATION_ID = 'locationID'
 
 PROTOCOLS = ('aekos',)
 
@@ -144,18 +146,17 @@ def _process_trait_env_data(traitfile, envfile, destdir):
     # Extract the trait data and the env variable data.
     # Possible that no trait data or env variable data.
     traitenvRecords = {}
-    citationList = []
     traitNames, speciesNames1 = _add_trait_env_data(
-        traitfile, 'traits', citationList, traitenvRecords)
+        traitfile, 'traits', traitenvRecords)
     envNames, speciesNames2 = _add_trait_env_data(
-        envfile, 'variables', citationList, traitenvRecords)
+        envfile, 'variables', traitenvRecords)
 
     if not traitNames and not envNames:
         raise Exception("No traits and environment variables are found")
 
     # Save data as csv file
     headers = traitNames + envNames
-    count = _save_as_csv(citationList, traitenvRecords, headers, datadir)
+    count = _save_as_csv(traitenvRecords, headers, datadir)
 
     if count == 0:
         raise Exception("No trait/environment data is found")
@@ -163,7 +164,7 @@ def _process_trait_env_data(traitfile, envfile, destdir):
     # zip traits/env data file and citation file
     zipfilename = 'aekos_traits_env.zip'
     _zip_data_dir(os.path.join(destdir, zipfilename), datadir, [
-                  'aekos_traits_env.csv', 'aekos_citation.txt'])
+                  'aekos_traits_env.csv', 'aekos_citation.csv'])
 
     return {'url': os.path.join(destdir, zipfilename),
             'name': zipfilename,
@@ -173,26 +174,42 @@ def _process_trait_env_data(traitfile, envfile, destdir):
             }
 
 
-def _save_as_csv(citationList, trait_env_data, headers, datadir):
-    # Save citations as file
-    with io.open(os.path.join(datadir, 'aekos_citation.txt'),
+def _save_as_csv(trait_env_data, headers, datadir):
+    # Save citations and metadata as csv file
+    colhders = [LONGITUDE, LATITUDE, SPECIES, LOCATION_ID] 
+    otrhders = ['trait_date', 'trait_citation', 'trait_metadata', \
+                'env_date', 'env_citation', 'env_metadata']
+    with io.open(os.path.join(datadir, 'aekos_citation.csv'),
                  mode='wb') as cit_file:
-        for citation in citationList:
-            cit_file.write(citation + '\n')
+        cit_writer = csv.writer(cit_file)
+        cit_writer.writerow(colhders + otrhders)
 
-    # save data as csv file
+        for item in trait_env_data.itervalues():
+            for traits, envvars in _product(item['traits'], item['variables']):
+                # Add the event date, citation and metadata for trait/env data
+                row = [item.get(i, '') for i in colhders] + \
+                      [traits.get('metadata', {}).get(col, '') 
+                          for col in [EVENT_DATE, CITATION, METADATA]] + \
+                      [envvars.get('metadata', {}).get(col, '') 
+                          for col in [EVENT_DATE, CITATION, METADATA]]
+                cit_writer.writerow(row)
+
+    # save trait/env data as csv file
     count = 0
+    colhders = [LONGITUDE, LATITUDE, EVENT_DATE, SPECIES, LOCATION_ID, MONTH, YEAR]
     with io.open(os.path.join(datadir, 'aekos_traits_env.csv'),
                  mode='wb') as csv_file:
         csv_writer = csv.writer(csv_file)
-        csv_writer.writerow([LONGITUDE, LATITUDE, EVENT_DATE] + headers)
+        csv_writer.writerow(colhders + headers)
         for key, item in trait_env_data.iteritems():
             for traits, envvars in _product(item['traits'], item['variables']):
-                row = [item['lon'], item['lat'], key[1]] + \
+                row = [item.get(i, '') for i in colhders] + \
                     ([''] * len(headers))
-                for record in (traits + envvars):
+
+                # Add in the list of traits/env variables.
+                for record in (traits.get('value', []) + envvars.get('value', [])):
                     try:
-                        index = headers.index(record['name']) + 3
+                        index = headers.index(record['name']) + len(colhders)
                         row[index] = record['value']
                     except ValueError as e:
                         LOG.info('Skip {} ...'.format(record['name']))
@@ -205,13 +222,13 @@ def _save_as_csv(citationList, trait_env_data, headers, datadir):
 def _product(traitcol, envcol):
     # return all possible combinations of traits and env variables.
     if not traitcol:
-        return itertools.product([[]], envcol)
+        return itertools.product([{}], envcol)
     if not envcol:
-        return itertools.product(traitcol, [[]])
+        return itertools.product(traitcol, [{}])
     return itertools.product(traitcol, envcol)
 
 
-def _add_trait_env_data(resultfile, fieldname, citationList, trait_env_data):
+def _add_trait_env_data(resultfile, fieldname, trait_env_data):
     nameList = []
 
     # return if there is no result file
@@ -235,22 +252,47 @@ def _add_trait_env_data(resultfile, fieldname, citationList, trait_env_data):
         # given date, with different values.
         # shall be either traits or variables
         valueList = row.get(fieldname, [])
+ 
         if valueList:
-            location = (row['locationID'], row.get('eventDate', ''))
-            trait_env_data.setdefault(location, {
-                'lon': row['decimalLongitude'],
-                'lat': row['decimalLatitude'],
-                'traits': [],
-                'variables': []})[fieldname].append(valueList)
+            data = {
+                'value': valueList,
+                'metadata': {
+                    CITATION : row.get('bibliographicCitation', ''),
+                    METADATA : row.get('samplingProtocol', ''),
+                    EVENT_DATE : row.get('eventDate', '')
+                }
+            }
+ 
+            # For trait, merged by location ID, eventdate and species name. 
+            # For env data, add to records where trait data is within x 
+            # (i.e. 30) days from collection, and same location.
+            found = False
+            if fieldname != 'traits':
+                for item in trait_env_data.itervalues():
+                    if item[LOCATION_ID] == row.get('locationID') and \
+                       _days(item.get(EVENT_DATE), row.get('eventDate')) <= 30:
+                        item[fieldname].append(data)
+                        found = True
+
+            if not found or fieldname == 'traits':
+                location = (row.get('locationID'), row.get('eventDate'), row.get('scientificName', ''))
+                trait_env_data.setdefault(location, {
+                    LONGITUDE : row.get('decimalLongitude'),
+                    LATITUDE : row.get('decimalLatitude'),
+                    LOCATION_ID : row.get('locationID', ''),
+                    EVENT_DATE : row.get('eventDate', ''),
+                    MONTH : row.get('month'),
+                    YEAR : row.get('year'),
+                    SPECIES : row.get('scientificName'),
+                    'traits': [],
+                    'variables': []})[fieldname].append(data)
+
             _addName(valueList, nameList)
 
-            # Add citation if not already included
-            # TODO: Use set here
-            citation = row.get('bibliographicCitation', '').strip()
-            if citation and citation not in citationList:
-                citationList.append(row['bibliographicCitation'])
     return nameList, speciesList
 
+def _days(date1, date2):
+    return abs((datetime.strptime(date1, '%Y-%m-%d') - datetime.strptime(date2, '%Y-%m-%d')).days)
 
 def _addName(recordList, nameList):
     # Add the name of the record if it is not included in the name list yet.
@@ -258,7 +300,6 @@ def _addName(recordList, nameList):
         name = record.get('name', '').strip()
         if name and name not in nameList:
             nameList.append(name)
-
 
 def _process_occurrence_data(occurrencefile, destdir):
     # Get the occurrence data
@@ -347,7 +388,7 @@ def _aekos_postprocess(csvfile, mdfile, dest, csvRowCount,
         taxon_name = md[0]['scientificName'] or scientificName
 
     # Generate aekos_dataset.json
-    imported_date = datetime.datetime.now().strftime('%d/%m/%Y')
+    imported_date = datetime.now().strftime('%d/%m/%Y')
     if dsType == 'occurrence':
         title = "%s occurrences" % (taxon_name)
         description = "Observed occurrences for %s, imported from AEKOS on %s" % (

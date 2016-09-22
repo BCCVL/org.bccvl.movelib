@@ -105,13 +105,13 @@ class AekosTest(unittest.TestCase):
         self.assertTrue(os.path.exists(os.path.join(
             self.tmpdir, 'data', 'aekos_traits_env.csv')))
         self.assertTrue(os.path.exists(os.path.join(
-            self.tmpdir, 'data', 'aekos_citation.txt')))
+            self.tmpdir, 'data', 'aekos_citation.csv')))
 
         # Check file content
         self.assertTrue(filecmp.cmp(os.path.join(self.tmpdir, 'data', 'aekos_traits_env.csv'),
                                     resource_filename(__name__, 'data/aekos_traits_env.csv')))
-        self.assertTrue(filecmp.cmp(os.path.join(self.tmpdir, 'data', 'aekos_citation.txt'),
-                                    resource_filename(__name__, 'data/aekos_citation.txt')))
+        self.assertTrue(filecmp.cmp(os.path.join(self.tmpdir, 'data', 'aekos_citation.csv'),
+                                    resource_filename(__name__, 'data/aekos_citation.csv')))
 
     @mock.patch('org.bccvl.movelib.protocol.aekos._download_as_file')
     def test_aekos_traits_to_file_no_envvar(self, mock_download_as_file=None):
@@ -134,13 +134,13 @@ class AekosTest(unittest.TestCase):
         self.assertTrue(os.path.exists(os.path.join(
             self.tmpdir, 'data', 'aekos_traits_env.csv')))
         self.assertTrue(os.path.exists(os.path.join(
-            self.tmpdir, 'data', 'aekos_citation.txt')))
+            self.tmpdir, 'data', 'aekos_citation.csv')))
 
         # Check file content
         self.assertTrue(filecmp.cmp(os.path.join(self.tmpdir, 'data', 'aekos_traits_env.csv'),
                                     resource_filename(__name__, 'data/aekos_traits_env_no_env.csv')))
-        self.assertTrue(filecmp.cmp(os.path.join(self.tmpdir, 'data', 'aekos_citation.txt'),
-                                    resource_filename(__name__, 'data/aekos_citation.txt')))
+        self.assertTrue(filecmp.cmp(os.path.join(self.tmpdir, 'data', 'aekos_citation.csv'),
+                                    resource_filename(__name__, 'data/aekos_citation_no_env.csv')))
 
     @mock.patch('org.bccvl.movelib.protocol.aekos._download_as_file')
     def test_aekos_traits_to_file_no_trait(self, mock_download_as_file=None):
@@ -163,13 +163,13 @@ class AekosTest(unittest.TestCase):
         self.assertTrue(os.path.exists(os.path.join(
             self.tmpdir, 'data', 'aekos_traits_env.csv')))
         self.assertTrue(os.path.exists(os.path.join(
-            self.tmpdir, 'data', 'aekos_citation.txt')))
+            self.tmpdir, 'data', 'aekos_citation.csv')))
 
         # Check file content
         self.assertTrue(filecmp.cmp(os.path.join(self.tmpdir, 'data', 'aekos_traits_env.csv'),
                                     resource_filename(__name__, 'data/aekos_traits_env_no_trait.csv')))
-        self.assertTrue(filecmp.cmp(os.path.join(self.tmpdir, 'data', 'aekos_citation.txt'),
-                                    resource_filename(__name__, 'data/aekos_citation.txt')))
+        self.assertTrue(filecmp.cmp(os.path.join(self.tmpdir, 'data', 'aekos_citation.csv'),
+                                    resource_filename(__name__, 'data/aekos_citation_no_trait.csv')))
 
     @mock.patch('org.bccvl.movelib.protocol.aekos._download_as_file')
     def test_aekos_traits_to_file_multispecies(self, mock_download_as_file=None):
@@ -192,10 +192,10 @@ class AekosTest(unittest.TestCase):
         self.assertTrue(os.path.exists(os.path.join(
             self.tmpdir, 'data', 'aekos_traits_env.csv')))
         self.assertTrue(os.path.exists(os.path.join(
-            self.tmpdir, 'data', 'aekos_citation.txt')))
+            self.tmpdir, 'data', 'aekos_citation.csv')))
 
         # Check file content
         self.assertTrue(filecmp.cmp(os.path.join(self.tmpdir, 'data', 'aekos_traits_env.csv'),
                                     resource_filename(__name__, 'data/aekos_traits_env_multispecies.csv')))
-        self.assertTrue(filecmp.cmp(os.path.join(self.tmpdir, 'data', 'aekos_citation.txt'),
-                                    resource_filename(__name__, 'data/aekos_citation2.txt')))
+        self.assertTrue(filecmp.cmp(os.path.join(self.tmpdir, 'data', 'aekos_citation.csv'),
+                                    resource_filename(__name__, 'data/aekos_citation_multispecies.csv')))
