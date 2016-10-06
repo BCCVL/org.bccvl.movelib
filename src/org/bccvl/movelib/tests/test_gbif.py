@@ -37,10 +37,16 @@ class GBIFTest(unittest.TestCase):
                         dest)
             return (dest, None)
 
+    def _urlopen(self, url):
+        if url.startswith('http://api.gbif.org/v1/dataset/'):
+            return pkg_resources.resource_stream(__name__, 'data/gbif_dataset.json')
+
     #@unittest.skip("not yet implemented")
+    @mock.patch('urllib.urlopen')
     @mock.patch('urllib.urlretrieve')
-    def test_gbif_to_file(self, mock_urlretrieve=None):
+    def test_gbif_to_file(self, mock_urlretrieve=None, mock_urlopen=None):
         mock_urlretrieve.side_effect = self._urlretrieve
+        mock_urlopen.side_effect = self._urlopen
         # mock urllib.urlretrieve ....
         #        return zip file with data.csv and citation.csv
         # mock urllib.urlretriev ...

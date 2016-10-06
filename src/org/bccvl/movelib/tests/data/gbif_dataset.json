@@ -1,0 +1,250 @@
+{
+  "key": "96b54e8c-f762-11e1-a439-00145eb45e9a",
+  "installationKey": "aafdc932-75f7-4414-9d40-faf72a525aec",
+  "publishingOrganizationKey": "5ffa575c-fcd4-4583-9611-545f67b04316",
+  "doi": "doi:10.15468/dzwr2y",
+  "external": false,
+  "numConstituents": 0,
+  "type": "OCCURRENCE",
+  "title": "Ohio State Acarology Laboratory (OSAL), Ohio State University",
+  "description": "Vouchered occurrence records for mites from the Ohio State University Acarology Laboratory.",
+  "language": "eng",
+  "homepage": "http://www.biosci.ohio-state.edu/~acarolog/collection",
+  "citation": {
+    "text": "Museum of Biological Diversity, The Ohio State University: Ohio State Acarology Laboratory (OSAL), Ohio State University"
+  },
+  "lockedForAutoUpdate": false,
+  "createdBy": "registry-migration.gbif.org",
+  "modifiedBy": "License Import script",
+  "created": "2009-06-09T13:07:32.000+0000",
+  "modified": "2016-08-18T12:32:37.996+0000",
+  "contacts": [
+    {
+      "key": 195761,
+      "type": "ORIGINATOR",
+      "primary": true,
+      "userId": [],
+      "firstName": "Hans",
+      "lastName": "Klompen",
+      "position": [
+        "Curator, Assoc. Professor"
+      ],
+      "email": [
+        "klompen.1@osu.edu"
+      ],
+      "phone": [],
+      "homepage": [
+        "http://www.biosci.ohio-state.edu/~acarolog/collection"
+      ],
+      "organization": "Ohio State University",
+      "address": [],
+      "country": "US",
+      "createdBy": "crawler.gbif.org",
+      "modifiedBy": "crawler.gbif.org",
+      "created": "2015-09-11T14:36:04.511+0000",
+      "modified": "2015-09-11T14:36:04.511+0000"
+    },
+    {
+      "key": 195762,
+      "type": "METADATA_AUTHOR",
+      "primary": true,
+      "userId": [],
+      "firstName": "Joe",
+      "lastName": "Cora",
+      "position": [
+        "Biodiversity Informatics Manager"
+      ],
+      "email": [
+        "cora.1@osu.edu"
+      ],
+      "phone": [],
+      "homepage": [],
+      "organization": "Ohio State University",
+      "address": [],
+      "country": "US",
+      "createdBy": "crawler.gbif.org",
+      "modifiedBy": "crawler.gbif.org",
+      "created": "2015-09-11T14:36:04.517+0000",
+      "modified": "2015-09-11T14:36:04.517+0000"
+    },
+    {
+      "key": 195763,
+      "type": "ADMINISTRATIVE_POINT_OF_CONTACT",
+      "primary": true,
+      "userId": [],
+      "firstName": "Hans",
+      "lastName": "Klompen",
+      "position": [
+        "Curator, Assoc. Professor"
+      ],
+      "email": [
+        "klompen.1@osu.edu"
+      ],
+      "phone": [],
+      "homepage": [
+        "http://www.biosci.ohio-state.edu/~acarolog/collection"
+      ],
+      "organization": "Ohio State University",
+      "address": [],
+      "country": "US",
+      "createdBy": "crawler.gbif.org",
+      "modifiedBy": "crawler.gbif.org",
+      "created": "2015-09-11T14:36:04.520+0000",
+      "modified": "2015-09-11T14:36:04.520+0000"
+    }
+  ],
+  "endpoints": [
+    {
+      "key": 82667,
+      "type": "DWC_ARCHIVE",
+      "url": "http://xbiod.osu.edu/ipt/archive.do?r=osal",
+      "createdBy": "5ffa575c-fcd4-4583-9611-545f67b04316",
+      "modifiedBy": "5ffa575c-fcd4-4583-9611-545f67b04316",
+      "created": "2015-09-11T14:34:51.010+0000",
+      "modified": "2015-09-11T14:34:51.010+0000",
+      "machineTags": []
+    },
+    {
+      "key": 82666,
+      "type": "EML",
+      "url": "http://xbiod.osu.edu/ipt/eml.do?r=osal",
+      "createdBy": "5ffa575c-fcd4-4583-9611-545f67b04316",
+      "modifiedBy": "5ffa575c-fcd4-4583-9611-545f67b04316",
+      "created": "2015-09-11T14:34:50.794+0000",
+      "modified": "2015-09-11T14:34:50.794+0000",
+      "machineTags": []
+    }
+  ],
+  "machineTags": [
+    {
+      "key": 204950,
+      "namespace": "crawler.gbif.org",
+      "name": "crawl_attempt",
+      "value": "56",
+      "createdBy": "crawler.gbif.org",
+      "created": "2015-09-11T14:35:50.183+0000"
+    },
+    {
+      "key": 12754,
+      "namespace": "metasync.gbif.org",
+      "name": "code",
+      "value": "OSAL",
+      "createdBy": "crawler.gbif.org",
+      "created": "2013-12-17T14:32:04.151+0000"
+    },
+    {
+      "key": 12755,
+      "namespace": "metasync.gbif.org",
+      "name": "declaredCount",
+      "value": "57337",
+      "createdBy": "crawler.gbif.org",
+      "created": "2013-12-17T14:32:04.234+0000"
+    },
+    {
+      "key": 12756,
+      "namespace": "metasync.gbif.org",
+      "name": "maxSearchResponseRecords",
+      "value": "5000",
+      "createdBy": "crawler.gbif.org",
+      "created": "2013-12-17T14:32:04.403+0000"
+    },
+    {
+      "key": 12757,
+      "namespace": "metasync.gbif.org",
+      "name": "conceptualSchema",
+      "value": "http://digir.net/schema/conceptual/darwin/2003/1.0/darwin2.xsd",
+      "createdBy": "crawler.gbif.org",
+      "created": "2013-12-17T14:32:04.486+0000"
+    }
+  ],
+  "tags": [],
+  "identifiers": [
+    {
+      "key": 26001,
+      "type": "URL",
+      "identifier": "http://xbiod.osu.edu/ipt/resource.do?r=osal",
+      "createdBy": "crawler.gbif.org",
+      "created": "2015-07-24T14:31:09.963+0000"
+    },
+    {
+      "key": 24357,
+      "type": "URL",
+      "identifier": "http://hymfiles.biosci.ohio-state.edu:8080/ipt/resource.do?r=osal",
+      "createdBy": "crawler.gbif.org",
+      "created": "2015-02-20T17:41:12.329+0000"
+    },
+    {
+      "key": 24356,
+      "type": "UUID",
+      "identifier": "96b54e8c-f762-11e1-a439-00145eb45e9a",
+      "createdBy": "crawler.gbif.org",
+      "created": "2015-02-20T17:41:12.327+0000"
+    },
+    {
+      "key": 10751,
+      "type": "GBIF_PORTAL",
+      "identifier": "8398",
+      "createdBy": "registry-migration.gbif.org",
+      "created": "2012-09-05T14:04:20.000+0000"
+    }
+  ],
+  "comments": [
+    {
+      "key": 1897,
+      "content": "Import script set license to CC_BY_4_0",
+      "createdBy": "License Import script",
+      "modifiedBy": "License Import script",
+      "created": "2016-08-18T12:36:25.225+0000",
+      "modified": "2016-08-18T12:36:25.225+0000"
+    }
+  ],
+  "bibliographicCitations": [],
+  "curatorialUnits": [],
+  "taxonomicCoverages": [
+    {
+      "coverages": [
+        {
+          "scientificName": "Acari",
+          "commonName": "mites",
+          "rank": {
+            "verbatim": "subclass",
+            "interpreted": "SUBCLASS"
+          }
+        }
+      ]
+    }
+  ],
+  "geographicCoverages": [
+    {
+      "description": "Worldwide distribution of records.",
+      "boundingBox": {
+        "minLatitude": -90.0,
+        "maxLatitude": 90.0,
+        "minLongitude": -180.0,
+        "maxLongitude": 180.0,
+        "globalCoverage": true
+      }
+    }
+  ],
+  "temporalCoverages": [],
+  "keywordCollections": [
+    {
+      "thesaurus": "GBIF Dataset Type Vocabulary: http://rs.gbif.org/vocabulary/gbif/dataset_type.xml",
+      "keywords": [
+        "Occurrence"
+      ]
+    },
+    {
+      "thesaurus": "GBIF Dataset Subtype Vocabulary: http://rs.gbif.org/vocabulary/gbif/dataset_subtype.xml",
+      "keywords": [
+        "Specimen"
+      ]
+    }
+  ],
+  "countryCoverage": [],
+  "collections": [],
+  "dataDescriptions": [],
+  "dataLanguage": "eng",
+  "pubDate": "2015-09-10T22:00:00.000+0000",
+  "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+}
