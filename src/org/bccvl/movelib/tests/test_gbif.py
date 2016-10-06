@@ -52,13 +52,19 @@ class GBIFTest(unittest.TestCase):
         move(self.gbif_source, file_dest)
 
         # Check files are created
-        self.assertTrue(os.path.exists(os.path.join(self.tmpdir, 'gbif_dataset.json')))
-        self.assertTrue(os.path.exists(os.path.join(self.tmpdir, 'gbif_occurrence.zip')))
-        self.assertTrue(os.path.exists(os.path.join(self.tmpdir, 'gbif_metadata.json')))
+        self.assertTrue(os.path.exists(
+            os.path.join(self.tmpdir, 'gbif_dataset.json')))
+        self.assertTrue(os.path.exists(
+            os.path.join(self.tmpdir, 'gbif_occurrence.zip')))
+        self.assertTrue(os.path.exists(
+            os.path.join(self.tmpdir, 'gbif_metadata.json')))
 
         # Check file contents
         zf = zipfile.ZipFile(os.path.join(self.tmpdir, 'gbif_occurrence.zip'))
         zf.extractall(self.tmpdir)
-        self.assertTrue(filecmp.cmp(os.path.join(self.tmpdir, 'gbif_metadata.json'), pkg_resources.resource_filename(__name__, 'data/gbif_metadata.json')))
-        self.assertTrue(filecmp.cmp(os.path.join(self.tmpdir, 'data', 'gbif_occurrence.csv'), pkg_resources.resource_filename(__name__, 'data/gbif_occurrence.csv')))
-        self.assertTrue(filecmp.cmp(os.path.join(self.tmpdir, 'data', 'gbif_citation.txt'), pkg_resources.resource_filename(__name__, 'data/gbif_citation.txt')))
+        self.assertTrue(filecmp.cmp(os.path.join(self.tmpdir, 'gbif_metadata.json'),
+                                    pkg_resources.resource_filename(__name__, 'data/gbif_metadata.json')))
+        self.assertTrue(filecmp.cmp(os.path.join(self.tmpdir, 'data', 'gbif_occurrence.csv'),
+                                    pkg_resources.resource_filename(__name__, 'data/gbif_occurrence.csv')))
+        self.assertTrue(filecmp.cmp(os.path.join(self.tmpdir, 'data', 'gbif_citation.txt'),
+                                    pkg_resources.resource_filename(__name__, 'data/gbif_citation.txt')))
