@@ -12,13 +12,12 @@ setup(
     # Get more strings from
     # http://pypi.python.org/pypi?:action=list_classifiers
     classifiers=[
-        "Framework :: Plone",
         "Programming Language :: Python",
     ],
     keywords='',
     author='',
     author_email='',
-    url='http://svn.plone.org/svn/collective/',
+    # url='http://svn.plone.org/svn/collective/',
     license='GPL',
     packages=find_packages('src'),
     package_dir={'': 'src'},
@@ -34,5 +33,4 @@ setup(
         'http': ['requests'],
         'test': ['paramiko', 'scp', 'python-swiftclient', 'python-keystoneclient', 'requests'],
     },
-
 )
