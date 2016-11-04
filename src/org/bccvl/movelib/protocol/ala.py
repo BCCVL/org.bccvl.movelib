@@ -8,6 +8,7 @@ import tempfile
 import urllib
 from urlparse import urlparse, parse_qs
 import zipfile
+from org.bccvl.movelib.utils import zip_occurrence_data
 
 PROTOCOLS = ('ala',)
 
@@ -21,8 +22,8 @@ MONTH = 'month'
 
 settings = {
     "metadata_url" : "http://bie.ala.org.au/ws/species/{lsid}.json",
-    "occurrence_url" : "http://biocache.ala.org.au/ws/occurrences/index/download?qa=zeroCoordinates,badlyFormedBasisOfRecord,detectedOutlier,decimalLatLongCalculationFromEastingNorthingFailed,missingBasisOfRecord,decimalLatLongCalculationFromVerbatimFailed,coordinatesCentreOfCountry,geospatialIssue,coordinatesOutOfRange,speciesOutsideExpertRange,userVerified,processingError,decimalLatLongConverionFailed,coordinatesCentreOfStateProvince,habitatMismatch&q=lsid:{lsid}&fields=decimalLongitude,decimalLatitude,coordinateUncertaintyInMeters.p,eventDate.p,year.p,month.p&reasonTypeId=4"
-}
+    "occurrence_url" : "{biocache_url}?qa={filter}&q={query}&fields=decimalLongitude,decimalLatitude,coordinateUncertaintyInMeters.p,eventDate.p,year.p,month.p,speciesID.p&reasonTypeId=4"
+    }
 
 """
 ALAService used to interface with Atlas of Living Australia (ALA)
@@ -32,7 +33,7 @@ LOG = logging.getLogger(__name__)
 
 
 def validate(url):
-    return url.scheme == 'ala' and url.query and parse_qs(url.query).get('lsid')
+    return url.scheme == 'ala' and url.query
 
 
 def download(source, dest=None):
@@ -45,44 +46,64 @@ def download(source, dest=None):
     @return: True and a list of file downloaded if successful. Otherwise False.
     """
 
+    # Parameters for the query
     url = urlparse(source['url'])
-    lsid = parse_qs(url.query)['lsid'][0]
+    params = parse_qs(url.query)
+    qparam = params['query'][0].split(':', 1)
+    lsid = None
+    if (qparam[0] == 'lsid'):
+        lsid = qparam[1]
 
     if dest is None:
         dest = tempfile.mkdtemp()
 
     try:
-        csvfile = _download_occurrence_by_lsid(lsid, dest)
+        occurrence_url = settings['occurrence_url'].format(
+                                    biocache_url=params['url'][0], 
+                                    filter=params['filter'][0], 
+                                    query=params['query'][0])        
+        csvfile = _download_occurrence(occurrence_url, dest)
+        if lsid is None:
+            lsid = csvfile['lsid']
+        if lsid is None:
+            raise Exception("No lsid for species in query with {}".format(qparam))
+
         mdfile = _download_metadata_for_lsid(lsid, dest)
-        dsfile = _ala_postprocess(csvfile['url'], mdfile['url'], lsid, dest)
+        dsfile = _ala_postprocess(csvfile['url'], mdfile['url'], occurrence_url, dest)
         return [dsfile, csvfile, mdfile]
     except Exception as e:
         LOG.error("Failed to download occurrence data with lsid '{0}': {1}".format(lsid, e))
         raise
 
-def _zip_occurrence_data(occzipfile, data_folder_path):
-    with zipfile.ZipFile(occzipfile, 'w') as zf:
-        zf.write(os.path.join(data_folder_path, 'ala_occurrence.csv'), 'data/ala_occurrence.csv')
-        zf.write(os.path.join(data_folder_path, 'ala_citation.csv'), 'data/ala_citation.csv')
+def _get_species_guid_from_csv(csvfile):
+    lsid = None
+    with io.open(csvfile, mode='br+') as csv_file:
+        csv_reader = csv.reader(csv_file)
 
+        # skip the header
+        next(csv_reader)
 
-def _download_occurrence_by_lsid(lsid, dest):
+        # get the 7th column as the lsid
+        for row in csv_reader:
+            if row[6]:
+                lsid = row[6]
+                break
+    return lsid
+
+def _download_occurrence(occurrence_url, dest):
     """
-    Downloads Species Occurrence data from ALA (Atlas of Living Australia) based on an LSID (Life Science Identifier)
-    @param lsid: the lsid of the species to download occurrence data for
-    @type lsid: str
-    @param remote_destination_directory: the destination directory that the ALA files are going to end up inside of on the remote machine. Used to form the metadata .json file.
-    @type remote_destination_directory: str
-    @param local_dest_dir: The local directory to temporarily store the ALA files in.
-    @type local_dest_dir: str
+    Downloads Species Occurrence data from ALA (Atlas of Living Australia)
+    @param download_url: the url to download species occurrence data
+    @type download_url: str
+    @param dest: the destination directory that the ALA files are going to end up inside of on the remote machine. Used to form the metadata .json file.
+    @type dest: str
     @return True if the dataset was obtained. False otherwise
     """
     # TODO: validate dest is a dir?
 
     # Get occurrence data
-
-    occurrence_url = settings['occurrence_url'].format(lsid=lsid)
     temp_file = None
+    lsid = None
     try:
         temp_file, _ = urllib.urlretrieve(occurrence_url)
         # extract data.csv file into dest
@@ -96,9 +117,13 @@ def _download_occurrence_by_lsid(lsid, dest):
             z.extract('citation.csv', dest)
             os.rename(os.path.join(dest, 'citation.csv'),
                       os.path.join(data_dest, 'ala_citation.csv'))
+        lsid = _get_species_guid_from_csv(os.path.join(data_dest, 'ala_occurrence.csv'))
 
         # Zip it out
-        _zip_occurrence_data(os.path.join(dest, 'ala_occurrence.zip'), os.path.join(dest, 'data'))
+        zip_occurrence_data(os.path.join(dest, 'ala_occurrence.zip'), 
+                            os.path.join(dest, 'data'),
+                            'ala_occurrence.csv',
+                            'ala_citation.csv')
 
     except KeyError:
         LOG.error("Cannot find file %s in downloaded zip file", 'data.csv')
@@ -113,7 +138,8 @@ def _download_occurrence_by_lsid(lsid, dest):
 
     return { 'url' : os.path.join(dest, 'ala_occurrence.zip'),
              'name': 'ala_occurrence.zip',
-             'content_type': 'application/zip'}
+             'content_type': 'application/zip',
+             'lsid': lsid }
 
 def _download_metadata_for_lsid(lsid, dest):
     """Download metadata for lsid from ALA
@@ -135,7 +161,7 @@ def _download_metadata_for_lsid(lsid, dest):
              'content_type': 'application/json'}
 
 
-def _ala_postprocess(csvzipfile, mdfile, lsid, dest):
+def _ala_postprocess(csvzipfile, mdfile, occurrence_url, dest):
     # cleanup occurrence csv file and generate dataset metadata
 
     # Generate dataset .json
@@ -162,7 +188,10 @@ def _ala_postprocess(csvzipfile, mdfile, lsid, dest):
 
     # Rebuild the zip archive file with updated occurrence csv file.
     os.remove(csvzipfile)
-    _zip_occurrence_data(csvzipfile, os.path.join(os.path.dirname(csvzipfile), 'data'))
+    zip_occurrence_data(csvzipfile, 
+                        os.path.join(os.path.dirname(csvzipfile), 'data'),
+                        'ala_occurrence.csv',
+                        'ala_citation.csv')
     
     # 3. generate ala_dataset.json
     imported_date = datetime.datetime.now().strftime('%d/%m/%Y')
@@ -192,7 +221,7 @@ def _ala_postprocess(csvzipfile, mdfile, lsid, dest):
         ],
         'provenance': {
             'source': 'ALA',
-            'url': settings['occurrence_url'].format(lsid=lsid),
+            'url': occurrence_url,
             'source_date': imported_date
         }
     }

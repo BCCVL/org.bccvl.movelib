@@ -5,6 +5,8 @@ import struct
 import hashlib
 from urllib import quote
 from urlparse import urlsplit
+import zipfile
+import os
 
 
 class AuthTkt(object):
@@ -107,3 +109,8 @@ def build_destination(dest, settings=None):
                 continue
             destination[key] = swift_settings[key]
     return destination
+
+def zip_occurrence_data(occzipfile, data_folder_path, occur_filename, citation_filename):
+    with zipfile.ZipFile(occzipfile, 'w') as zf:
+        zf.write(os.path.join(data_folder_path, occur_filename), 'data/' + occur_filename)
+        zf.write(os.path.join(data_folder_path, citation_filename), 'data/' + citation_filename)
