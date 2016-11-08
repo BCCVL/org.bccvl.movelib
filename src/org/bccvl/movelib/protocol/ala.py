@@ -6,6 +6,7 @@ import logging
 import os
 import tempfile
 import urllib
+import requests
 from urlparse import urlparse, parse_qs
 import zipfile
 from org.bccvl.movelib.utils import zip_occurrence_data
@@ -21,7 +22,7 @@ YEAR = 'year'
 MONTH = 'month'
 
 settings = {
-    "metadata_url" : "http://bie.ala.org.au/ws/species/{lsid}.json",
+    "metadata_url" : "http://bie.ala.org.au/ws/species/guids/bulklookup",
     "occurrence_url" : "{biocache_url}?qa={filter}&q={query}&fields=decimalLongitude,decimalLatitude,coordinateUncertaintyInMeters.p,eventDate.p,year.p,month.p,speciesID.p&reasonTypeId=4"
     }
 
@@ -63,20 +64,26 @@ def download(source, dest=None):
                                     filter=params['filter'][0], 
                                     query=params['query'][0])        
         csvfile = _download_occurrence(occurrence_url, dest)
-        if lsid is None:
-            lsid = csvfile['lsid']
-        if lsid is None:
-            raise Exception("No lsid for species in query with {}".format(qparam))
 
-        mdfile = _download_metadata_for_lsid(lsid, dest)
-        dsfile = _ala_postprocess(csvfile['url'], mdfile['url'], occurrence_url, dest)
-        return [dsfile, csvfile, mdfile]
+        #TODO: Need to handle user loaded dataset where there is no lsid
+        if lsid is None and not csvfile['lsids']:
+            raise Exception("No lsid for species in query with {}".format(params['query'][0]))
+
+        lsid_list = csvfile['lsids'] if lsid is None else [lsid]
+
+        if lsid_list:
+            mdfile = _download_metadata_for_lsid(lsid_list, dest)
+            dsfile = _ala_postprocess(csvfile['url'], mdfile['url'], occurrence_url, dest)
+            return [dsfile, csvfile, mdfile]
+        else: 
+            dsfile = _ala_postprocess(csvfile['url'], None, occurrence_url, dest)
+            return [dsfile, csvfile]            
     except Exception as e:
-        LOG.error("Failed to download occurrence data with lsid '{0}': {1}".format(lsid, e))
+        LOG.error("Failed to download occurrence data with lsid '{0}': {1}".format(', '.join(lsid_list), e))
         raise
 
 def _get_species_guid_from_csv(csvfile):
-    lsid = None
+    lsids = set()
     with io.open(csvfile, mode='br+') as csv_file:
         csv_reader = csv.reader(csv_file)
 
@@ -86,9 +93,8 @@ def _get_species_guid_from_csv(csvfile):
         # get the 7th column as the lsid
         for row in csv_reader:
             if row[6]:
-                lsid = row[6]
-                break
-    return lsid
+                lsids.add(row[6])
+    return list(lsids)
 
 def _download_occurrence(occurrence_url, dest):
     """
@@ -103,7 +109,7 @@ def _download_occurrence(occurrence_url, dest):
 
     # Get occurrence data
     temp_file = None
-    lsid = None
+    lsid_list = []
     try:
         temp_file, _ = urllib.urlretrieve(occurrence_url)
         # extract data.csv file into dest
@@ -117,7 +123,7 @@ def _download_occurrence(occurrence_url, dest):
             z.extract('citation.csv', dest)
             os.rename(os.path.join(dest, 'citation.csv'),
                       os.path.join(data_dest, 'ala_citation.csv'))
-        lsid = _get_species_guid_from_csv(os.path.join(data_dest, 'ala_occurrence.csv'))
+        lsid_list = _get_species_guid_from_csv(os.path.join(data_dest, 'ala_occurrence.csv'))
 
         # Zip it out
         zip_occurrence_data(os.path.join(dest, 'ala_occurrence.zip'), 
@@ -139,21 +145,25 @@ def _download_occurrence(occurrence_url, dest):
     return { 'url' : os.path.join(dest, 'ala_occurrence.zip'),
              'name': 'ala_occurrence.zip',
              'content_type': 'application/zip',
-             'lsid': lsid }
+             'lsids': lsid_list }
 
-def _download_metadata_for_lsid(lsid, dest):
-    """Download metadata for lsid from ALA
+def _download_metadata_for_lsid(lsid_list, dest):
+    """Download metadata from ALA for the list of lsids specified.
     """
-    # TODO: verify dest is a dir?
 
     # Get occurrence metadata
-    metadata_url = settings['metadata_url'].format(lsid=lsid)
+    metadata_url = settings['metadata_url']
     try:
-        metadata_file, _ = urllib.urlretrieve(metadata_url,
-                                              os.path.join(dest, 'ala_metadata.json'))
+        response = requests.post(metadata_url, json=lsid_list)
+        metadata_file = os.path.join(dest, 'ala_metadata.json')
+        results = json.loads(response.text)['searchDTOList']
+
+        with io.open(metadata_file, mode='wb') as f:
+            json.dump(results, f, indent=2)
+
     except Exception as e:
         LOG.error("Could not download occurrence metadata from ALA for LSID %s : %s",
-                  lsid, e)
+                  ', '.join(lsid_list), e)
         raise
 
     return { 'url' : metadata_file,
@@ -163,28 +173,29 @@ def _download_metadata_for_lsid(lsid, dest):
 
 def _ala_postprocess(csvzipfile, mdfile, occurrence_url, dest):
     # cleanup occurrence csv file and generate dataset metadata
+    # occurrence dataset can be multiple species, i.e. user upload data
+    taxon_names = {}
+    common_names = []
 
-    # Generate dataset .json
-    # 1. read mdfile and find interesting bits:
-    metadata = json.load(open(mdfile))
+    if mdfile:
+        # Generate dataset .json
+        # 1. read mdfile and find interesting bits:
+        sp_metadata = json.load(open(mdfile))
 
-    taxon_name = None
-    common_name = None
-    # TODO: is this the correct bit? (see plone dataset import )
-    taxon_name = (metadata.get('classification', {}).get('scientificName')
-                  or metadata.get('taxonConcept', {}).get('nameString')
-                  or metadata.get('taxonConcept', {}).get('nameComplete'))
-    # TODO: Find how to inteprete taxonName, which is a list now.
-    #             or metadata.get('taxonName', [None])[0]
+        import ipdb; ipdb.set_trace()
+        for md in sp_metadata:
+            # TODO: is this the correct bit? (see plone dataset import )
+            guid = md.get('guid')
+            if guid:                
+                taxon_names[guid] = md.get('scientificName') or \
+                                    md.get('name') or \
+                                    md.get('nameComplete')
+                common_names.append(md['commonNameSingle'])
 
-    for record in metadata['commonNames']:
-        if record['nameString'] is not None:
-            common_name = record['nameString']
-            break
 
     # 2. clean up occurrence csv file and count occurrence points
     csvfile = os.path.join(dest, 'data/ala_occurrence.csv')
-    num_occurrences = _normalize_occurrence(csvfile, taxon_name)
+    num_occurrences = _normalize_occurrence(csvfile, taxon_names)
 
     # Rebuild the zip archive file with updated occurrence csv file.
     os.remove(csvzipfile)
@@ -195,30 +206,37 @@ def _ala_postprocess(csvzipfile, mdfile, occurrence_url, dest):
     
     # 3. generate ala_dataset.json
     imported_date = datetime.datetime.now().strftime('%d/%m/%Y')
-    if common_name:
-        title = "%s (%s) occurrences" % (common_name, taxon_name)
-        description = "Observed occurrences for %s (%s), imported from ALA on %s" % (common_name, taxon_name, imported_date)
+    common = ', '.join(common_names)
+    taxon = ', '.join(taxon_names.values())
+    if common_names:
+        title = "%s (%s) occurrences" % (common, taxon)
+        description = "Observed occurrences for %s (%s), imported from ALA on %s" % (common, taxon, imported_date)
+    elif taxon:
+        title = "%s occurrences" % (taxon)
+        description = "Observed occurrences for %s, imported from ALA on %s" % (taxon, imported_date)
     else:
-        title = "%s occurrences" % (taxon_name)
-        description = "Observed occurrences for %s, imported from ALA on %s" % (taxon_name, imported_date)
+        # This would be the case where the user dataset does not match to any species in ALA
+        # TODO: Use the user supplied name
+        title = "Occurrence for user defined dataset"
+        description = "User defined occurrence dataset, imported on %s" % (imported_date)
+
+    files = [{
+                'url': csvzipfile,
+                'dataset_type': 'occurrence',
+                'size': os.path.getsize(csvzipfile)
+             }]
+    if mdfile:
+        files.append({
+                        'url': mdfile,
+                        'dataset_type': 'attribution',
+                        'size': os.path.getsize(mdfile)
+                     })
 
     ala_dataset = {
         'title': title,
         'description': description,
         'num_occurrences': num_occurrences,
-        'files': [
-            {
-                'url': csvzipfile,
-                'dataset_type': 'occurrence',
-                'size': os.path.getsize(csvzipfile)
-            },
-            {
-                'url': mdfile,
-                'dataset_type': 'attribution',
-                'size': os.path.getsize(mdfile)
-            }
-
-        ],
+        'files': files,
         'provenance': {
             'source': 'ALA',
             'url': occurrence_url,
@@ -237,7 +255,7 @@ def _ala_postprocess(csvzipfile, mdfile, occurrence_url, dest):
     return dsfile
 
 
-def _normalize_occurrence(file_path, taxon_name):
+def _normalize_occurrence(file_path, taxon_names):
     """
     Normalizes an occurrence CSV file by replacing the first line of content from:
     Scientific Name,Longitude - original,Latitude - original,Coordinate Uncertainty in Metres - parsed,Event Date - parsed,Year - parsed,Month - parsed
@@ -248,7 +266,7 @@ def _normalize_occurrence(file_path, taxon_name):
     Also filters any occurrences which are tagged as erroneous by ALA.
     @param file_path: the path to the occurrence CSV file to normalize
     @type file_path: str
-    @param taxon_name: The actual taxon name to use for each occurrence row. Sometimes ALA mixes these up.
+    @param taxon_names: The actual list of taxon names to use for each occurrence row. Sometimes ALA mixes these up.
     @type taxon_name: str
     """
 
@@ -273,6 +291,7 @@ def _normalize_occurrence(file_path, taxon_name):
             date = row[3]
             year = row[4]
             month = row[5]
+            guid = row[6]
 
             # TODO: isn't there a builtin for this?
             if not _is_number(lon) or not _is_number(lat):
@@ -281,7 +300,7 @@ def _normalize_occurrence(file_path, taxon_name):
             if 'true' in row[7:]:
                 continue
 
-            new_csv.append([taxon_name, lon, lat, uncertainty, date, year, month])
+            new_csv.append([taxon_names.get(guid, ''), lon, lat, uncertainty, date, year, month])
 
     if len(new_csv) == 1:
         # Everything was filtered out!
