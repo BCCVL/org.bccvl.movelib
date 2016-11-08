@@ -21,7 +21,6 @@ class ALATest(unittest.TestCase):
     def _urlretrieve(self, url, dest=None):
         # 1. occurrence_url
         params = parse_qs(url)
-        import ipdb; ipdb.set_trace()
         if url.startswith('http://biocache.ala.org.au/ws/occurrences/index/download'):
             query = params['q']
             temp_file = os.path.join(self.tmpdir, 'ala_data.zip')
