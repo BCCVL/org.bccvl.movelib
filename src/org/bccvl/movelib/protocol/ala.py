@@ -65,7 +65,7 @@ def download(source, dest=None):
                                     filter=params['filter'][0], 
                                     query=params['query'][0],
                                     fields=fields,
-                                    email=params['email'][0]) 
+                                    email=params.get('email', [''])[0])
         csvfile = _download_occurrence(occurrence_url, dest)
 
         #TODO: Need to handle user loaded dataset where there is no lsid
