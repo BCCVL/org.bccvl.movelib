@@ -44,7 +44,8 @@ class ALATest(unittest.TestCase):
         occurrence_url = "http://biocache.ala.org.au/ws/occurrences/index/download"
         query = "lsid:urn:lsid:biodiversity.org.au:afd.taxon:31a9b8b8-4e8f-4343-a15f-2ed24e0bf1ae"
         qfilter = "zeroCoordinates,badlyFormedBasisOfRecord,detectedOutlier,decimalLatLongCalculationFromEastingNorthingFailed,missingBasisOfRecord,decimalLatLongCalculationFromVerbatimFailed,coordinatesCentreOfCountry,geospatialIssue,coordinatesOutOfRange,speciesOutsideExpertRange,userVerified,processingError,decimalLatLongConverionFailed,coordinatesCentreOfStateProvince,habitatMismatch"
-        src_url = 'ala://ala?url={}&query={}&filter={}'.format(occurrence_url, query, qfilter)
+        email = "testuser@gmail.com"
+        src_url = 'ala://ala?url={}&query={}&filter={}&email={}'.format(occurrence_url, query, qfilter, email)
 
         file_dest = {
             'url': 'file://{}'.format(self.tmpdir)
@@ -66,7 +67,8 @@ class ALATest(unittest.TestCase):
         occurrence_url = "http://biocache.ala.org.au/ws/occurrences/index/download"
         query = "qid:urn:lsid:biodiversity.org.au:afd.taxon:31a9b8b8-4e8f-4343-a15f-2ed24e0bf1ae"
         qfilter = "zeroCoordinates,badlyFormedBasisOfRecord,detectedOutlier,decimalLatLongCalculationFromEastingNorthingFailed,missingBasisOfRecord,decimalLatLongCalculationFromVerbatimFailed,coordinatesCentreOfCountry,geospatialIssue,coordinatesOutOfRange,speciesOutsideExpertRange,userVerified,processingError,decimalLatLongConverionFailed,coordinatesCentreOfStateProvince,habitatMismatch"
-        src_url = 'ala://ala?url={}&query={}&filter={}'.format(occurrence_url, query, qfilter)
+        email = "testuser@gmail.com"
+        src_url = 'ala://ala?url={}&query={}&filter={}&email={}'.format(occurrence_url, query, qfilter, email)
 
         file_dest = {
             'url': 'file://{}'.format(self.tmpdir)

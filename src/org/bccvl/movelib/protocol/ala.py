@@ -21,9 +21,10 @@ EVENT_DATE = 'date'
 YEAR = 'year'
 MONTH = 'month'
 
+fields = "decimalLongitude,decimalLatitude,coordinateUncertaintyInMeters.p,eventDate.p,year.p,month.p,speciesID.p"
 settings = {
     "metadata_url" : "http://bie.ala.org.au/ws/species/guids/bulklookup",
-    "occurrence_url" : "{biocache_url}?qa={filter}&q={query}&fields=decimalLongitude,decimalLatitude,coordinateUncertaintyInMeters.p,eventDate.p,year.p,month.p,speciesID.p&reasonTypeId=4"
+    "occurrence_url" : "{biocache_url}?qa={filter}&q={query}&fields={fields}&email={email}&reasonTypeId=4&sourceTyepeId=2002"
     }
 
 """
@@ -62,7 +63,9 @@ def download(source, dest=None):
         occurrence_url = settings['occurrence_url'].format(
                                     biocache_url=params['url'][0], 
                                     filter=params['filter'][0], 
-                                    query=params['query'][0])        
+                                    query=params['query'][0],
+                                    fields=fields,
+                                    email=params['email'][0]) 
         csvfile = _download_occurrence(occurrence_url, dest)
 
         #TODO: Need to handle user loaded dataset where there is no lsid
