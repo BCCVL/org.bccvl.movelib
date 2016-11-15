@@ -22,6 +22,7 @@ LOG = logging.getLogger(__name__)
 # TODO: add support for temp_url_key ....
 #       e.g. if temp_url_key is in source/dest, use normal http transfer?
 
+
 def validate(url):
     # check that container and file are specified in swift url.
     # i.e. swift://host:port/v1/account/container/path/to/file
@@ -83,10 +84,11 @@ def download(source, dest=None):
             #    container, object, error_timestamp, response_dict, path
             #    psudodir, attempts
             if not result['success']:
-                raise Exception('Download from swift {container}/{object} to {out_file} failed with {error}'.format(out_file=outfilename, **result))
-            outfile = { 'url' : outfilename,
-                        'name': os.path.basename(object_name),
-                        'content_type': result['response_dict']['headers'].get('content-type', 'application/octet-stream')}
+                raise Exception(
+                    'Download from swift {container}/{object} to {out_file} failed with {error}'.format(out_file=outfilename, **result))
+            outfile = {'url': outfilename,
+                       'name': os.path.basename(object_name),
+                       'content_type': result['response_dict']['headers'].get('content-type', 'application/octet-stream')}
             filelist.append(outfile)
         return filelist
     except Exception as e:
@@ -126,9 +128,11 @@ def upload(source, dest):
             headers.append('Content-Type: {}'.format(source['content_type']))
         for result in swift.upload(container, [SwiftUploadObject(source['url'], object_name=object_name, options={'header': headers})]):
             # TODO: we may get  result['action'] = 'create_container'
-            #       and result['action'] = 'upload_object';  result['path'] = source['url']
+            # and result['action'] = 'upload_object';  result['path'] =
+            # source['url']
             if not result['success']:
-                raise Exception('Upload to Swift {container}/{object_name} failed with {error}'.format(object_name=object_name, **result))
+                raise Exception('Upload to Swift {container}/{object_name} failed with {error}'.format(
+                    object_name=object_name, **result))
     except Exception as e:
         LOG.error("Upload to swift failed: %s", e)
         raise
