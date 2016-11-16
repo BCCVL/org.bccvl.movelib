@@ -24,7 +24,7 @@ MONTH = 'month'
 fields = "decimalLongitude,decimalLatitude,coordinateUncertaintyInMeters.p,eventDate.p,year.p,month.p,speciesID.p"
 settings = {
     "metadata_url" : "http://bie.ala.org.au/ws/species/guids/bulklookup",
-    "occurrence_url" : "{biocache_url}?qa={filter}&q={query}&fields={fields}&email={email}&reasonTypeId=4&sourceTyepeId=2002"
+    "occurrence_url" : "{biocache_url}?qa={filter}&q={query}&fields={fields}&email={email}&reasonTypeId=4&sourceTypeId=2002"
     }
 
 """
@@ -117,22 +117,27 @@ def _download_occurrence(occurrence_url, dest):
         temp_file, _ = urllib.urlretrieve(occurrence_url)
         # extract data.csv file into dest
         with zipfile.ZipFile(temp_file) as z:
-            z.extract('data.csv', dest)
-            # rename to ala_occurrence.csv
             data_dest = os.path.join(dest, 'data')
             os.mkdir(data_dest)
+
+            # rename to ala_occurrence.csv
+            z.extract('data.csv', dest)
             os.rename(os.path.join(dest, 'data.csv'),
                       os.path.join(data_dest, 'ala_occurrence.csv'))
-            z.extract('citation.csv', dest)
-            os.rename(os.path.join(dest, 'citation.csv'),
-                      os.path.join(data_dest, 'ala_citation.csv'))
+
+            # citation file is optional
+            try:
+                z.extract('citation.csv', dest)
+                os.rename(os.path.join(dest, 'citation.csv'),
+                          os.path.join(data_dest, 'ala_citation.csv'))
+            except Exception:
+                pass
         lsid_list = _get_species_guid_from_csv(os.path.join(data_dest, 'ala_occurrence.csv'))
 
-        # Zip it out
+        # Zip out files if available
         zip_occurrence_data(os.path.join(dest, 'ala_occurrence.zip'), 
                             os.path.join(dest, 'data'),
-                            'ala_occurrence.csv',
-                            'ala_citation.csv')
+                            ['ala_occurrence.csv', 'ala_citation.csv'])
 
     except KeyError:
         LOG.error("Cannot find file %s in downloaded zip file", 'data.csv')
@@ -202,8 +207,7 @@ def _ala_postprocess(csvzipfile, mdfile, occurrence_url, dest):
     os.remove(csvzipfile)
     zip_occurrence_data(csvzipfile, 
                         os.path.join(os.path.dirname(csvzipfile), 'data'),
-                        'ala_occurrence.csv',
-                        'ala_citation.csv')
+                        ['ala_occurrence.csv', 'ala_citation.csv'])
     
     # 3. generate ala_dataset.json
     imported_date = datetime.datetime.now().strftime('%d/%m/%Y')

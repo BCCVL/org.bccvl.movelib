@@ -110,7 +110,8 @@ def build_destination(dest, settings=None):
             destination[key] = swift_settings[key]
     return destination
 
-def zip_occurrence_data(occzipfile, data_folder_path, occur_filename, citation_filename):
+def zip_occurrence_data(occzipfile, data_folder_path, filelist):
     with zipfile.ZipFile(occzipfile, 'w') as zf:
-        zf.write(os.path.join(data_folder_path, occur_filename), 'data/' + occur_filename)
-        zf.write(os.path.join(data_folder_path, citation_filename), 'data/' + citation_filename)
+        for filename in filelist:
+            if os.path.isfile(os.path.join(data_folder_path, filename)):
+                zf.write(os.path.join(data_folder_path, filename), 'data/' + filename)
