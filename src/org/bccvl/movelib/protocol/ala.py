@@ -21,7 +21,7 @@ EVENT_DATE = 'date'
 YEAR = 'year'
 MONTH = 'month'
 
-fields = "decimalLongitude,decimalLatitude,coordinateUncertaintyInMeters.p,eventDate.p,year.p,month.p,speciesID.p"
+fields = "decimalLongitude,decimalLatitude,coordinateUncertaintyInMeters.p,eventDate.p,year.p,month.p,speciesID.p,species.p"
 settings = {
     "metadata_url" : "http://bie.ala.org.au/ws/species/guids/bulklookup",
     "occurrence_url" : "{biocache_url}?qa={filter}&q={query}&fields={fields}&email={email}&reasonTypeId=4&sourceTypeId=2002"
@@ -85,18 +85,28 @@ def download(source, dest=None):
         LOG.error("Failed to download occurrence data with lsid '{0}': {1}".format(', '.join(lsid_list), e))
         raise
 
+# Return a list of index for the specified headers
+def _get_header_index(header, csv_header):
+    index = {}
+    for col in header:
+        index[col] = csv_header.index(col) if col in csv_header else -1
+    return index
+
 def _get_species_guid_from_csv(csvfile):
     lsids = set()
+    speciesColName = 'species ID - Processed'
+
     with io.open(csvfile, mode='br+') as csv_file:
         csv_reader = csv.reader(csv_file)
 
-        # skip the header
-        next(csv_reader)
-
-        # get the 7th column as the lsid
-        for row in csv_reader:
-            if row[6]:
-                lsids.add(row[6])
+        # Check if csv file header has species ID column
+        csv_header = next(csv_reader)
+        speciesIndex = _get_header_index([speciesColName], csv_header)[speciesColName]
+        if speciesIndex >= 0:
+            # get the lsid
+            for row in csv_reader:
+                if row[speciesIndex]:
+                    lsids.add(row[speciesIndex])
     return list(lsids)
 
 def _download_occurrence(occurrence_url, dest):
@@ -287,25 +297,43 @@ def _normalize_occurrence(file_path, taxon_names):
     with io.open(file_path, mode='br+') as csv_file:
         csv_reader = csv.reader(csv_file)
 
-        # skip the header
-        next(csv_reader)
+        # header of csv file
+        csv_header = next(csv_reader)
+
+        # column headers in ALA csv file
+        colHeaders = ['Longitude - original', 
+                      'Latitude - original', 
+                      'Coordinate Uncertainty in Metres - parsed', 
+                      'Event Date - parsed', 
+                      'Year - parsed', 
+                      'Month - parsed', 
+                      'species ID - Processed',
+                      'Species - matched']
+        indexes = _get_header_index(colHeaders, csv_header)
+
+        colnumber = len([col for col in indexes if indexes[col] >= 0])
         for row in csv_reader:
-            lon = row[0]
-            lat = row[1]
-            uncertainty = row[2]
-            date = row[3]
-            year = row[4]
-            month = row[5]
-            guid = row[6]
+            lon = _get_value(row, indexes['Longitude - original'])
+            lat = _get_value(row, indexes['Latitude - original'])
+            uncertainty = _get_value(row, indexes['Coordinate Uncertainty in Metres - parsed'])
+            date = _get_value(row, indexes['Event Date - parsed'])
+            year = _get_value(row, indexes['Year - parsed'])
+            month = _get_value(row, indexes['Month - parsed'])
+            guid = _get_value(row, indexes['species ID - Processed'])
+            species = _get_value(row, indexes['Species - matched'])
 
             # TODO: isn't there a builtin for this?
             if not _is_number(lon) or not _is_number(lat):
                 continue
+            # Either species ID or species name must present
+            if indexes['species ID - Processed'] < 0 and indexes['Species - matched'] < 0:
+                continue
             # one of our filters returned true (shouldn't happen?)
-            if 'true' in row[7:]:
+            if 'true' in row[colnumber:]:
                 continue
 
-            new_csv.append([taxon_names.get(guid, ''), lon, lat, uncertainty, date, year, month])
+            # For species name, use taxon name 1st, then the species name supplied in the occurrence file.
+            new_csv.append([taxon_names.get(guid, species), lon, lat, uncertainty, date, year, month])
 
     if len(new_csv) == 1:
         # Everything was filtered out!
@@ -319,6 +347,8 @@ def _normalize_occurrence(file_path, taxon_names):
     # return number of rows
     return len(new_csv) - 1
 
+def _get_value(row, index):
+    return(row[index] if index >= 0 else '')
 
 def _is_number(s):
     try:
