@@ -68,10 +68,7 @@ def download(source, dest=None):
                                     email=params.get('email', [''])[0])
         csvfile = _download_occurrence(occurrence_url, dest)
 
-        #TODO: Need to handle user loaded dataset where there is no lsid
-        if lsid is None and not csvfile['lsids']:
-            raise Exception("No lsid for species in query with {}".format(params['query'][0]))
-
+        # Possible that there is no lsid for user loaded dataset
         lsid_list = csvfile['lsids'] if lsid is None else [lsid]
 
         if lsid_list:
