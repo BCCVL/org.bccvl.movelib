@@ -323,7 +323,7 @@ def _normalize_occurrence(file_path, taxon_names):
             if not _is_number(lon) or not _is_number(lat):
                 continue
             # Either species ID or species name must present
-            if indexes['species ID - Processed'] < 0 and indexes['Species - matched'] < 0:
+            if not guid and not species:
                 continue
             # one of our filters returned true (shouldn't happen?)
             if 'true' in row[colnumber:]:
