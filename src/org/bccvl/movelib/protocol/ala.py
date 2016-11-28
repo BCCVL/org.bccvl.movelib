@@ -207,9 +207,9 @@ def _ala_postprocess(csvzipfile, mdfile, occurrence_url, dest):
             guid = md.get('guid')
             if guid:
                 taxon_names[guid] = md.get('scientificName') or \
-                common_names.append(md['commonNameSingle'])
                     md.get('name') or \
                     md.get('nameComplete')
+                common_names.append(md.get('commonNameSingle') or md.get('scientificName'))
 
     # 2. clean up occurrence csv file and count occurrence points
     csvfile = os.path.join(dest, 'data/ala_occurrence.csv')
