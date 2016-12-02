@@ -58,10 +58,10 @@ def download(source, dest=None):
         scp.get(url.path, dest, recursive=False)
         ssh.close()
 
-        outputfile = { 'url' : dest,
-                       'name': os.path.basename(url.path),
-                       'content_type': 'application/octet-stream'
-		     }
+        outputfile = {'url': dest,
+                      'name': os.path.basename(url.path),
+                      'content_type': 'application/octet-stream'
+                      }
         return [outputfile]
     except SCPException:
         LOG.error("Could not SCP file %s from %s to local destination\
@@ -100,7 +100,7 @@ def upload(source, dest):
                  os.path.join(url.path, dest['filename']),
                  url.query,
                  url.fragment
-                )
+                 )
             ))
         scp = SCPClient(ssh.get_transport())
         scp.put(source['url'], url.path, recursive=True)  # recursive should be an option in dest dict?

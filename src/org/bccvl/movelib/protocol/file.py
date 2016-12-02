@@ -9,8 +9,10 @@ PROTOCOLS = ('file',)
 
 LOG = logging.getLogger(__name__)
 
+
 def validate(url):
     return url.scheme == 'file' and url.path.strip() != ''
+
 
 def download(source, dest=None):
     """
@@ -23,7 +25,7 @@ def download(source, dest=None):
     """
 
     try:
-    	srcurl = urlparse(source['url'])
+        srcurl = urlparse(source['url'])
         if os.path.exists(dest) and os.path.isdir(dest):
             filename = os.path.basename(srcurl.path)
             dest_path = os.path.join(dest, filename)
@@ -32,14 +34,15 @@ def download(source, dest=None):
             dest_path = dest
 
         shutil.copy(srcurl.path, dest_path)
-        localfile = {'url' : dest_path,
-                    'name': filename,
-                    'content_type': 'application/octet-stream'
-               }
+        localfile = {'url': dest_path,
+                     'name': filename,
+                     'content_type': 'application/octet-stream'
+                     }
         return [localfile]
     except Exception as e:
         LOG.error("Could not download file: %s: %s", source['url'], e, exc_info=True)
         raise
+
 
 def upload(source, dest):
     """
@@ -52,7 +55,7 @@ def upload(source, dest):
     """
 
     try:
-    	url = urlparse(dest['url'])
+        url = urlparse(dest['url'])
         dest_filename = dest.get('filename', source['name'])
         dest_path = os.path.join(url.path, dest_filename)
         shutil.copy(source['url'], dest_path)

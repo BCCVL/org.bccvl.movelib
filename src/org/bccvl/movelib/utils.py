@@ -10,6 +10,7 @@ import os
 
 
 class AuthTkt(object):
+
     def __init__(self, secret, uid, data='', ip='0.0.0.0', tokens=(),
                  base64=True, ts=None):
         self.secret = str(secret)
@@ -109,6 +110,7 @@ def build_destination(dest, settings=None):
                 continue
             destination[key] = swift_settings[key]
     return destination
+
 
 def zip_occurrence_data(occzipfile, data_folder_path, filelist):
     with zipfile.ZipFile(occzipfile, 'w') as zf:
