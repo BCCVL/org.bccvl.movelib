@@ -65,7 +65,7 @@ def download(source, dest=None):
         return [outputfile]
     except SCPException:
         LOG.error("Could not SCP file %s from %s to local destination\
-                  %s as user %s", url.path, url.hostname, dest, username)
+                  %s as user %s", url.path, url.hostname, dest, username, exc_info=True)
         raise
 
 
@@ -107,5 +107,5 @@ def upload(source, dest):
         ssh.close()
     except Exception as e:
         LOG.error("Could not SCP file %s to destination %s on %s as user %s: %s",
-                  source['url'], url.path, url.hostname, username, e)
+                  source['url'], url.path, url.hostname, username, e, exc_info=True)
         raise

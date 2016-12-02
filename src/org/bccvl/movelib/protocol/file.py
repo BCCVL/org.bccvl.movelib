@@ -38,7 +38,7 @@ def download(source, dest=None):
                }
         return [localfile]
     except Exception as e:
-        LOG.error("Could not download file: %s: %s", source['url'], e)
+        LOG.error("Could not download file: %s: %s", source['url'], e, exc_info=True)
         raise
 
 def upload(source, dest):
@@ -57,5 +57,5 @@ def upload(source, dest):
         dest_path = os.path.join(url.path, dest_filename)
         shutil.copy(source['url'], dest_path)
     except:
-        LOG.error("Could not copy file %s to destination %s", source['url'], dest_path)
+        LOG.error("Could not copy file %s to destination %s", source['url'], dest_path, exc_info=True)
         raise

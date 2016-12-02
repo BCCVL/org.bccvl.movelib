@@ -118,7 +118,7 @@ def download(source, dest=None):
             return [ds_file, csv_file]
     except Exception as e:
         LOG.error("Failed to download {0} data with params '{1}': {2}".format(
-            service, params, e))
+            service, params, e), exc_info=True)
         raise
     finally:
         # remove temp files
@@ -369,7 +369,7 @@ def _download_metadata(params, dest):
     except Exception as e:
         LOG.error(
             "Could not download occurrence metadata from AEKOS for %s : %s",
-            params, e)
+            params, e, exc_info=True)
         raise
 
     return {'url': md_file,

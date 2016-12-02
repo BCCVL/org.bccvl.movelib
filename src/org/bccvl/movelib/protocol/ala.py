@@ -79,7 +79,8 @@ def download(source, dest=None):
             dsfile = _ala_postprocess(csvfile['url'], None, occurrence_url, dest)
             return [dsfile, csvfile]
     except Exception as e:
-        LOG.error("Failed to download occurrence data with lsid '{0}': {1}".format(', '.join(lsid_list), e))
+        LOG.error("Failed to download occurrence data with lsid '{0}': {1}".format(
+            ', '.join(lsid_list), e), exc_info=True)
         raise
 
 # Return a list of index for the specified headers
@@ -151,11 +152,11 @@ def _download_occurrence(occurrence_url, dest):
                             ['ala_occurrence.csv', 'ala_citation.csv'])
 
     except KeyError:
-        LOG.error("Cannot find file %s in downloaded zip file", 'data.csv')
+        LOG.error("Cannot find file %s in downloaded zip file", 'data.csv', exc_info=True)
         raise
     except Exception:
         # TODO: Not a zip file error.... does it have to raise?
-        LOG.error("The file %s is not a zip file", 'data.csv')
+        LOG.error("The file %s is not a zip file", 'data.csv', exc_info=True)
         raise
     finally:
         if temp_file:
@@ -183,7 +184,7 @@ def _download_metadata_for_lsid(lsid_list, dest):
 
     except Exception as e:
         LOG.error("Could not download occurrence metadata from ALA for LSID %s : %s",
-                  ', '.join(lsid_list), e)
+                  ', '.join(lsid_list), e, exc_info=True)
         raise
 
     return {'url': metadata_file,

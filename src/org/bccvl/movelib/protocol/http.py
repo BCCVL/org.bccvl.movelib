@@ -64,7 +64,7 @@ def download(source, dest=None):
         }
         return [htmlfile]
     except Exception as e:
-        LOG.error("Could not download file: %s: %s", source['url'], e)
+        LOG.error("Could not download file: %s: %s", source['url'], e, exc_info=True)
         raise
     finally:
         # We need to close response in case we did not consume all data

@@ -92,7 +92,7 @@ def download(source, dest=None):
             filelist.append(outfile)
         return filelist
     except Exception as e:
-        LOG.error("Download from Swift failed: %s", e)
+        LOG.error("Download from Swift failed: %s", e, exc_info=True)
         raise
 
 
@@ -134,5 +134,5 @@ def upload(source, dest):
                 raise Exception('Upload to Swift {container}/{object_name} failed with {error}'.format(
                     object_name=object_name, **result))
     except Exception as e:
-        LOG.error("Upload to swift failed: %s", e)
+        LOG.error("Upload to swift failed: %s", e, exc_info=True)
         raise
