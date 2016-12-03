@@ -2,6 +2,7 @@ import logging
 import os
 import re
 import tempfile
+import time
 from urlparse import urlsplit
 
 from swiftclient.service import SwiftService, SwiftUploadObject
@@ -66,30 +67,48 @@ def download(source, dest=None):
             outfilename = os.path.join(dest, os.path.basename(object_name))
         else:
             outfilename = dest
-        for result in swift.download(container, [object_name], {'out_file': outfilename}):
-            # result dict:  success
-            #    action: 'download_object'
-            #    success: True
-            #    container: ...
-            #    object: ...
-            #    path: ....
-            #    pseudodir: ...
-            #    start_time, finish_time, headers_receipt, auth_end_time,
-            #    read_length, attempts, response_dict
-            # result dict: error
-            #    action: 'download_object'
-            #    success: False
-            #    error: ...
-            #    traceback: ...
-            #    container, object, error_timestamp, response_dict, path
-            #    psudodir, attempts
-            if not result['success']:
-                raise Exception(
-                    'Download from swift {container}/{object} to {out_file} failed with {error}'.format(out_file=outfilename, **result))
-            outfile = {'url': outfilename,
-                       'name': os.path.basename(object_name),
-                       'content_type': result['response_dict']['headers'].get('content-type', 'application/octet-stream')}
-            filelist.append(outfile)
+
+        retries = 5  # number of retries left
+        backoff = 30  # wait time between retries
+        backoff_inc = 30  # increase in wait time per retry
+
+        while retries:
+            filelist = []
+            retries -= 1
+
+            try:
+                for result in swift.download(container, [object_name], {'out_file': outfilename}):
+                    # result dict:  success
+                    #    action: 'download_object'
+                    #    success: True
+                    #    container: ...
+                    #    object: ...
+                    #    path: ....
+                    #    pseudodir: ...
+                    #    start_time, finish_time, headers_receipt, auth_end_time,
+                    #    read_length, attempts, response_dict
+                    # result dict: error
+                    #    action: 'download_object'
+                    #    success: False
+                    #    error: ...
+                    #    traceback: ...
+                    #    container, object, error_timestamp, response_dict, path
+                    #    psudodir, attempts
+                    if not result['success']:
+                        raise Exception(
+                            'Download from selfelfwift {container}/{object} to {out_file} failed with {error}'.format(out_file=outfilename, **result))
+                    outfile = {'url': outfilename,
+                               'name': os.path.basename(object_name),
+                               'content_type': result['response_dict']['headers'].get('content-type', 'application/octet-stream')}
+                    filelist.append(outfile)
+            except Exception as e:
+                if not retries:
+                    # reraise if no retries left
+                    raise
+                LOG.warn("Download from Swift failed: %s - %d retries left", e, retries)
+                time.sleep(backoff)
+                backoff += backoff_inc
+                backoff_inc += 30
         return filelist
     except Exception as e:
         LOG.error("Download from Swift failed: %s", e, exc_info=True)
@@ -126,13 +145,29 @@ def upload(source, dest):
         headers = []
         if 'content_type' in source:
             headers.append('Content-Type: {}'.format(source['content_type']))
-        for result in swift.upload(container, [SwiftUploadObject(source['url'], object_name=object_name, options={'header': headers})]):
-            # TODO: we may get  result['action'] = 'create_container'
-            # and result['action'] = 'upload_object';  result['path'] =
-            # source['url']
-            if not result['success']:
-                raise Exception('Upload to Swift {container}/{object_name} failed with {error}'.format(
-                    object_name=object_name, **result))
+
+        retries = 5  # number of retries left
+        backoff = 30  # wait time between retries
+        backoff_inc = 30  # increase in wait time per retry
+
+        while retries:
+            retries -= 1
+            try:
+                for result in swift.upload(container, [SwiftUploadObject(source['url'], object_name=object_name, options={'header': headers})]):
+                    # TODO: we may get  result['action'] = 'create_container'
+                    # self.assertNotIn(member, container)d result['action'] = 'upload_object';  result['path'] =
+                    # source['url']
+                    if not result['success']:
+                        raise Exception(
+                            'Upload to Swift {container}/{object_name} failed with {error}'.format(object_name=object_name, **result))
+            except Exception as e:
+                if not retries:
+                    # reraise if no retries left
+                    raise
+                LOG.warn('Upload to Swift failed: %s - %d retries left', e, retries)
+                time.sleep(backoff)
+                backoff += backoff_inc
+                backoff_inc += 30
     except Exception as e:
         LOG.error("Upload to swift failed: %s", e, exc_info=True)
         raise
