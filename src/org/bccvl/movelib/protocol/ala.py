@@ -23,9 +23,9 @@ MONTH = 'month'
 
 fields = "decimalLongitude,decimalLatitude,coordinateUncertaintyInMeters.p,eventDate.p,year.p,month.p,speciesID.p,species.p"
 settings = {
-    "metadata_url" : "http://bie.ala.org.au/ws/species/guids/bulklookup",
-    "occurrence_url" : "{biocache_url}?qa={filter}&q={query}&fields={fields}&email={email}&reasonTypeId=4&sourceTypeId=2002"
-    }
+    "metadata_url": "http://bie.ala.org.au/ws/species/guids/bulklookup",
+    "occurrence_url": "{biocache_url}?qa={filter}&q={query}&fields={fields}&email={email}&reasonTypeId=4&sourceTypeId=2002"
+}
 
 """
 ALAService used to interface with Atlas of Living Australia (ALA)
@@ -61,11 +61,11 @@ def download(source, dest=None):
 
     try:
         occurrence_url = settings['occurrence_url'].format(
-                                    biocache_url=params['url'][0], 
-                                    filter=params['filter'][0], 
-                                    query=params['query'][0],
-                                    fields=fields,
-                                    email=params.get('email', [''])[0])
+            biocache_url=params['url'][0],
+            filter=params['filter'][0],
+            query=params['query'][0],
+            fields=fields,
+            email=params.get('email', [''])[0])
         csvfile = _download_occurrence(occurrence_url, dest)
 
         # Possible that there is no lsid for user loaded dataset
@@ -75,19 +75,23 @@ def download(source, dest=None):
             mdfile = _download_metadata_for_lsid(lsid_list, dest)
             dsfile = _ala_postprocess(csvfile['url'], mdfile['url'], occurrence_url, dest)
             return [dsfile, csvfile, mdfile]
-        else: 
+        else:
             dsfile = _ala_postprocess(csvfile['url'], None, occurrence_url, dest)
-            return [dsfile, csvfile]            
+            return [dsfile, csvfile]
     except Exception as e:
-        LOG.error("Failed to download occurrence data with lsid '{0}': {1}".format(', '.join(lsid_list), e))
+        LOG.error("Failed to download occurrence data with lsid '{0}': {1}".format(
+            ', '.join(lsid_list), e), exc_info=True)
         raise
 
 # Return a list of index for the specified headers
+
+
 def _get_header_index(header, csv_header):
     index = {}
     for col in header:
         index[col] = csv_header.index(col) if col in csv_header else -1
     return index
+
 
 def _get_species_guid_from_csv(csvfile):
     lsids = set()
@@ -105,6 +109,7 @@ def _get_species_guid_from_csv(csvfile):
                 if row[speciesIndex]:
                     lsids.add(row[speciesIndex])
     return list(lsids)
+
 
 def _download_occurrence(occurrence_url, dest):
     """
@@ -142,25 +147,26 @@ def _download_occurrence(occurrence_url, dest):
         lsid_list = _get_species_guid_from_csv(os.path.join(data_dest, 'ala_occurrence.csv'))
 
         # Zip out files if available
-        zip_occurrence_data(os.path.join(dest, 'ala_occurrence.zip'), 
+        zip_occurrence_data(os.path.join(dest, 'ala_occurrence.zip'),
                             os.path.join(dest, 'data'),
                             ['ala_occurrence.csv', 'ala_citation.csv'])
 
     except KeyError:
-        LOG.error("Cannot find file %s in downloaded zip file", 'data.csv')
+        LOG.error("Cannot find file %s in downloaded zip file", 'data.csv', exc_info=True)
         raise
     except Exception:
         # TODO: Not a zip file error.... does it have to raise?
-        LOG.error("The file %s is not a zip file", 'data.csv')
+        LOG.error("The file %s is not a zip file", 'data.csv', exc_info=True)
         raise
     finally:
         if temp_file:
             os.remove(temp_file)
 
-    return { 'url' : os.path.join(dest, 'ala_occurrence.zip'),
-             'name': 'ala_occurrence.zip',
-             'content_type': 'application/zip',
-             'lsids': lsid_list }
+    return {'url': os.path.join(dest, 'ala_occurrence.zip'),
+            'name': 'ala_occurrence.zip',
+            'content_type': 'application/zip',
+            'lsids': lsid_list}
+
 
 def _download_metadata_for_lsid(lsid_list, dest):
     """Download metadata from ALA for the list of lsids specified.
@@ -178,12 +184,12 @@ def _download_metadata_for_lsid(lsid_list, dest):
 
     except Exception as e:
         LOG.error("Could not download occurrence metadata from ALA for LSID %s : %s",
-                  ', '.join(lsid_list), e)
+                  ', '.join(lsid_list), e, exc_info=True)
         raise
 
-    return { 'url' : metadata_file,
-             'name': 'ala_metadata.json',
-             'content_type': 'application/json'}
+    return {'url': metadata_file,
+            'name': 'ala_metadata.json',
+            'content_type': 'application/json'}
 
 
 def _ala_postprocess(csvzipfile, mdfile, occurrence_url, dest):
@@ -200,11 +206,11 @@ def _ala_postprocess(csvzipfile, mdfile, occurrence_url, dest):
         for md in sp_metadata:
             # TODO: is this the correct bit? (see plone dataset import )
             guid = md.get('guid')
-            if guid:                
+            if guid:
                 taxon_names[guid] = md.get('scientificName') or \
-                                    md.get('name') or \
-                                    md.get('nameComplete')
-                common_names.append(md['commonNameSingle'])
+                    md.get('name') or \
+                    md.get('nameComplete')
+                common_names.append(md.get('commonNameSingle') or md.get('scientificName'))
 
     # 2. clean up occurrence csv file and count occurrence points
     csvfile = os.path.join(dest, 'data/ala_occurrence.csv')
@@ -212,10 +218,10 @@ def _ala_postprocess(csvzipfile, mdfile, occurrence_url, dest):
 
     # Rebuild the zip archive file with updated occurrence csv file.
     os.remove(csvzipfile)
-    zip_occurrence_data(csvzipfile, 
+    zip_occurrence_data(csvzipfile,
                         os.path.join(os.path.dirname(csvzipfile), 'data'),
                         ['ala_occurrence.csv', 'ala_citation.csv'])
-    
+
     # 3. generate ala_dataset.json
     imported_date = datetime.datetime.now().strftime('%d/%m/%Y')
     common = ', '.join(common_names)
@@ -233,16 +239,16 @@ def _ala_postprocess(csvzipfile, mdfile, occurrence_url, dest):
         description = "User defined occurrence dataset, imported on %s" % (imported_date)
 
     files = [{
-                'url': csvzipfile,
-                'dataset_type': 'occurrence',
-                'size': os.path.getsize(csvzipfile)
-             }]
+        'url': csvzipfile,
+        'dataset_type': 'occurrence',
+        'size': os.path.getsize(csvzipfile)
+    }]
     if mdfile:
         files.append({
-                        'url': mdfile,
-                        'dataset_type': 'attribution',
-                        'size': os.path.getsize(mdfile)
-                     })
+            'url': mdfile,
+            'dataset_type': 'attribution',
+            'size': os.path.getsize(mdfile)
+        })
 
     ala_dataset = {
         'title': title,
@@ -261,9 +267,9 @@ def _ala_postprocess(csvzipfile, mdfile, occurrence_url, dest):
     f = io.open(dataset_path, mode='wb')
     json.dump(ala_dataset, f, indent=2)
     f.close()
-    dsfile = { 'url' : dataset_path,
-               'name': 'ala_dataset.json',
-               'content_type': 'application/json'}
+    dsfile = {'url': dataset_path,
+              'name': 'ala_dataset.json',
+              'content_type': 'application/json'}
     return dsfile
 
 
@@ -298,12 +304,12 @@ def _normalize_occurrence(file_path, taxon_names):
         csv_header = next(csv_reader)
 
         # column headers in ALA csv file
-        colHeaders = ['Longitude - original', 
-                      'Latitude - original', 
-                      'Coordinate Uncertainty in Metres - parsed', 
-                      'Event Date - parsed', 
-                      'Year - parsed', 
-                      'Month - parsed', 
+        colHeaders = ['Longitude - original',
+                      'Latitude - original',
+                      'Coordinate Uncertainty in Metres - parsed',
+                      'Event Date - parsed',
+                      'Year - parsed',
+                      'Month - parsed',
                       'species ID - Processed',
                       'Species - matched']
         indexes = _get_header_index(colHeaders, csv_header)
@@ -344,8 +350,10 @@ def _normalize_occurrence(file_path, taxon_names):
     # return number of rows
     return len(new_csv) - 1
 
+
 def _get_value(row, index):
     return(row[index] if index >= 0 else '')
+
 
 def _is_number(s):
     try:

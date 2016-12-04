@@ -63,7 +63,7 @@ def download(source, dest=None):
         return [dsfile, csvfile, mdfile]
     except Exception as e:
         LOG.error(
-            "Failed to download occurrence data with lsid '{0}': {1}".format(lsid, e))
+            "Failed to download occurrence data with lsid '{0}': {1}".format(lsid, e), exc_info=True)
         raise
 
 
@@ -138,7 +138,7 @@ def _download_occurrence_by_lsid(lsid, dest):
                              data_dest)
 
     except Exception as e:
-        LOG.error("Fail to download occurrence records from GBIF, %s", e)
+        LOG.error("Fail to download occurrence records from GBIF, %s", e, exc_info=True)
         raise
     finally:
         if os.path.exists(temp_file):
@@ -168,7 +168,7 @@ def _get_dataset_citation(dskeylist, destfilepath):
                 f.close()
                 f = None
     except Exception as e:
-        LOG.error("Fail to download dataset citations from GBIF: %s", e)
+        LOG.error("Fail to download dataset citations from GBIF: %s", e, exc_info=True)
         raise
     finally:
         f = None
@@ -186,7 +186,7 @@ def _download_metadata_for_lsid(lsid, dest):
                                               os.path.join(dest, 'gbif_metadata.json'))
     except Exception as e:
         LOG.error("Could not download occurrence metadata from GBIF for LSID %s : %s",
-                  lsid, e)
+                  lsid, e, exc_info=True)
         raise
 
     return {'url': metadata_file,

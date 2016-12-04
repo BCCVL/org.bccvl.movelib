@@ -39,13 +39,13 @@ class HTTPTest(unittest.TestCase):
             'url': 'http://www.bccvl.org.au/datasets/test.csv',
             'cookies': cookies
         }
+        dest_file = os.path.join(self.tmpdir, 'test.csv')
         file_dest = {
-            'url': 'file://{}'.format(self.tmpdir)
+            'url': 'file://{}'.format(dest_file)
         }
 
         move(http_source, file_dest)
-
+        
         # verify destination file
-        dest_file = os.path.join(self.tmpdir, 'test.csv')
         self.assertTrue(os.path.exists(dest_file))
         self.assertEqual(open(dest_file).read(), 'test content')

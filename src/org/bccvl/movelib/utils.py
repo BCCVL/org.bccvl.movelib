@@ -10,6 +10,7 @@ import os
 
 
 class AuthTkt(object):
+
     def __init__(self, secret, uid, data='', ip='0.0.0.0', tokens=(),
                  base64=True, ts=None):
         self.secret = str(secret)
@@ -89,7 +90,7 @@ def build_source(src, userid=None, settings=None):
     elif url.scheme in ('swift+http', 'swift+https'):
         # TODO: should check swift host name as well
         swift_settings = settings.get('swift', {})
-        for key in ('os_auth_url', 'os_username', 'os_password', 'os_tenant_name'):
+        for key in ('os_auth_url', 'os_username', 'os_password', 'os_tenant_name', 'os_storage_url'):
             if key in swift_settings:
                 source[key] = swift_settings[key]
     return source
@@ -104,11 +105,12 @@ def build_destination(dest, settings=None):
         # TODO: should check swift host name as well
         # FIXME: assumes settings is not None
         swift_settings = settings and settings.get('swift', {}) or {}
-        for key in ('os_auth_url', 'os_username', 'os_password', 'os_tenant_name'):
+        for key in ('os_auth_url', 'os_username', 'os_password', 'os_tenant_name', 'os_storage_url'):
             if key not in swift_settings:
                 continue
             destination[key] = swift_settings[key]
     return destination
+
 
 def zip_occurrence_data(occzipfile, data_folder_path, filelist):
     with zipfile.ZipFile(occzipfile, 'w') as zf:

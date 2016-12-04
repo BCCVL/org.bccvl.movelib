@@ -26,16 +26,6 @@ def download(source, dest=None):
     response = None
     try:
         srcurl = urlsplit(source['url'])
-        if os.path.exists(dest) and os.path.isdir(dest):
-            filename = os.path.basename(srcurl.path)
-            if filename:
-                dest_path = os.path.join(dest, filename)
-            else:
-                fd, dest_path = tempfile.mkstemp(dir=dest)
-                filename = os.path.basename(dest_path)
-        else:
-            filename = os.path.basename(dest)
-            dest_path = dest
 
         # Download from the source URL using cookies and then write content to file
         cookie = source.get('cookies', {})
@@ -48,6 +38,17 @@ def download(source, dest=None):
         response = s.get(source['url'], stream=True, verify=verify)
         # raise exception case of error
         response.raise_for_status()
+
+        # set destination filename
+        if os.path.exists(dest) and os.path.isdir(dest):
+            if response.headers.get('content-type', '') == 'application/zip':
+                fd, dest_path = tempfile.mkstemp(suffix='.zip', dir=dest)
+            else:
+                fd, dest_path = tempfile.mkstemp(dir=dest)
+            filename = os.path.basename(dest_path)
+        else:
+            filename = os.path.basename(dest)
+            dest_path = dest
 
         # TODO: could check response.headers['content-length'] to decide streaming or not
         with open(dest_path, 'w') as f:
@@ -63,7 +64,7 @@ def download(source, dest=None):
         }
         return [htmlfile]
     except Exception as e:
-        LOG.error("Could not download file: %s: %s", source['url'], e)
+        LOG.error("Could not download file: %s: %s", source['url'], e, exc_info=True)
         raise
     finally:
         # We need to close response in case we did not consume all data
