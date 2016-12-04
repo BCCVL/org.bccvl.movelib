@@ -101,6 +101,8 @@ def download(source, dest=None):
                                'name': os.path.basename(object_name),
                                'content_type': result['response_dict']['headers'].get('content-type', 'application/octet-stream')}
                     filelist.append(outfile)
+                # no exception we can continue
+                retries = 0
             except Exception as e:
                 if not retries:
                     # reraise if no retries left
@@ -160,6 +162,8 @@ def upload(source, dest):
                     if not result['success']:
                         raise Exception(
                             'Upload to Swift {container}/{object_name} failed with {error}'.format(object_name=object_name, **result))
+                # no exception we can continue
+                retries = 0
             except Exception as e:
                 if not retries:
                     # reraise if no retries left
