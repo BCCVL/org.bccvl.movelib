@@ -1,12 +1,13 @@
 import Cookie
-from time import time
+import csv
+import hashlib
+import os
 import socket
 import struct
-import hashlib
+from time import time
 from urllib import quote
 from urlparse import urlsplit
 import zipfile
-import os
 
 
 class AuthTkt(object):
@@ -117,3 +118,58 @@ def zip_occurrence_data(occzipfile, data_folder_path, filelist):
         for filename in filelist:
             if os.path.isfile(os.path.join(data_folder_path, filename)):
                 zf.write(os.path.join(data_folder_path, filename), 'data/' + filename)
+
+
+class UnicodeCSVReader(object):
+    """
+    Expect an iterator that returns unicode strings which will be
+    parsed by csv module
+
+    """
+
+    def __init__(self, f):
+        """
+        Assumes utf-8 encoding and ignores all decoding errors.
+
+        f ... an iterator (maybe file object opened in text mode)
+        """
+        # build a standard csv reader, that works on utf-8 strings
+        self.reader = csv.reader(
+            (line.encode("utf-8", errors="ignore") for line in f))
+
+    def __iter__(self):
+        """
+        return an iterator over f
+        """
+        return self
+
+    def next(self):
+        """
+        return next row frow csv.reader, each cell as unicode again
+        """
+        return [cell.decode('utf-8') for cell in self.reader.next()]
+
+
+class UnicodeCSVWriter(object):
+    """
+    Writes unicode csv rows as utf-8 into file.
+    """
+
+    def __init__(self, f):
+        """
+        f ... an open file object that expects byte strings as input.
+        """
+        self.writer = csv.writer(f)
+
+    def writerow(self, row):
+        """
+        encode each cell value as utf-8 and write to writer as usual
+        """
+        self.writer.writerow([cell.encode('utf-8') for cell in row])
+
+    def writerows(self, rows):
+        """
+        write a list of rows using self.writerow
+        """
+        for row in rows:
+            self.writerow(row)
