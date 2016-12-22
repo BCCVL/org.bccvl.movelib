@@ -126,14 +126,26 @@ class UTF8Recoder:
     Iterator that reads an encoded stream and reencodes the input to UTF-8
     """
 
-    def __init__(self, f, encoding):
-        self.reader = codecs.getreader(encoding)(f)
+    def __init__(self, f):
+        self.reader = f
 
     def __iter__(self):
         return self
 
     def next(self):
-        return self.reader.next().encode("utf-8")
+        """
+        Try some popular encodings to convert input to unicode
+        """
+        line = self.reader.next()
+        for codec in ('utf-8', 'cp1252', 'mac_roman', 'latin_1', 'ascii'):
+            try:
+                line = line.decode(codec)
+                break
+            except UnicodeDecodeError as e:
+                pass
+        if not isinstance(line, unicode):
+            raise UnicodeDecodeError("can't decode input line to unicode")
+        return line.encode('utf-8')
 
 
 class UnicodeCSVReader(object):
@@ -143,14 +155,14 @@ class UnicodeCSVReader(object):
 
     """
 
-    def __init__(self, f, encoding="utf-8", **kwds):
+    def __init__(self, f, **kwds):
         """
         Assumes utf-8 encoding and ignores all decoding errors.
 
         f ... an iterator (maybe file object opened in text mode)
         """
         # build a standard csv reader, that works on utf-8 strings
-        f = UTF8Recoder(f, encoding)
+        f = UTF8Recoder(f)
         self.reader = csv.reader(f, **kwds)
 
     def __iter__(self):
