@@ -9,7 +9,7 @@ import urllib
 import requests
 from urlparse import urlparse, parse_qs
 import zipfile
-from org.bccvl.movelib.utils import zip_occurrence_data
+from org.bccvl.movelib.utils import zip_occurrence_data, UnicodeCSVReader, UnicodeCSVWriter
 
 PROTOCOLS = ('ala',)
 
@@ -224,19 +224,19 @@ def _ala_postprocess(csvzipfile, mdfile, occurrence_url, dest):
 
     # 3. generate ala_dataset.json
     imported_date = datetime.datetime.now().strftime('%d/%m/%Y')
-    common = ', '.join(common_names)
-    taxon = ', '.join(taxon_names.values())
+    common = u', '.join(common_names)
+    taxon = u', '.join(taxon_names.values())
     if common_names:
-        title = "%s (%s) occurrences" % (common, taxon)
-        description = "Observed occurrences for %s (%s), imported from ALA on %s" % (common, taxon, imported_date)
+        title = u"%s (%s) occurrences" % (common, taxon)
+        description = u"Observed occurrences for %s (%s), imported from ALA on %s" % (common, taxon, imported_date)
     elif taxon:
-        title = "%s occurrences" % (taxon)
-        description = "Observed occurrences for %s, imported from ALA on %s" % (taxon, imported_date)
+        title = u"%s occurrences" % (taxon)
+        description = u"Observed occurrences for %s, imported from ALA on %s" % (taxon, imported_date)
     else:
         # This would be the case where the user dataset does not match to any species in ALA
         # TODO: Use the user supplied name
-        title = "Occurrence for user defined dataset"
-        description = "User defined occurrence dataset, imported on %s" % (imported_date)
+        title = u"Occurrence for user defined dataset"
+        description = u"User defined occurrence dataset, imported on %s" % (imported_date)
 
     files = [{
         'url': csvzipfile,
@@ -297,33 +297,33 @@ def _normalize_occurrence(file_path, taxon_names):
     # Build the normalized CSV in memory, order needs to match whatever ala returns
     new_csv = [[SPECIES, LONGITUDE, LATITUDE, UNCERTAINTY, EVENT_DATE, YEAR, MONTH]]
 
-    with io.open(file_path, mode='br+') as csv_file:
-        csv_reader = csv.reader(csv_file)
+    with io.open(file_path, mode='br') as csv_file:
+        csv_reader = UnicodeCSVReader(csv_file)
 
         # header of csv file
         csv_header = next(csv_reader)
 
         # column headers in ALA csv file
-        colHeaders = ['Longitude - original',
-                      'Latitude - original',
-                      'Coordinate Uncertainty in Metres - parsed',
-                      'Event Date - parsed',
-                      'Year - parsed',
-                      'Month - parsed',
-                      'species ID - Processed',
-                      'Species - matched']
+        colHeaders = [u'Longitude - original',
+                      u'Latitude - original',
+                      u'Coordinate Uncertainty in Metres - parsed',
+                      u'Event Date - parsed',
+                      u'Year - parsed',
+                      u'Month - parsed',
+                      u'species ID - Processed',
+                      u'Species - matched']
         indexes = _get_header_index(colHeaders, csv_header)
 
         colnumber = len([col for col in indexes if indexes[col] >= 0])
         for row in csv_reader:
-            lon = _get_value(row, indexes['Longitude - original'])
-            lat = _get_value(row, indexes['Latitude - original'])
-            uncertainty = _get_value(row, indexes['Coordinate Uncertainty in Metres - parsed'])
-            date = _get_value(row, indexes['Event Date - parsed'])
-            year = _get_value(row, indexes['Year - parsed'])
-            month = _get_value(row, indexes['Month - parsed'])
-            guid = _get_value(row, indexes['species ID - Processed'])
-            species = _get_value(row, indexes['Species - matched'])
+            lon = _get_value(row, indexes[u'Longitude - original'])
+            lat = _get_value(row, indexes[u'Latitude - original'])
+            uncertainty = _get_value(row, indexes[u'Coordinate Uncertainty in Metres - parsed'])
+            date = _get_value(row, indexes[u'Event Date - parsed'])
+            year = _get_value(row, indexes[u'Year - parsed'])
+            month = _get_value(row, indexes[u'Month - parsed'])
+            guid = _get_value(row, indexes[u'species ID - Processed'])
+            species = _get_value(row, indexes[u'Species - matched'])
 
             # TODO: isn't there a builtin for this?
             if not _is_number(lon) or not _is_number(lat):
@@ -332,7 +332,7 @@ def _normalize_occurrence(file_path, taxon_names):
             if not guid and not species:
                 continue
             # one of our filters returned true (shouldn't happen?)
-            if 'true' in row[colnumber:]:
+            if u'true' in row[colnumber:]:
                 continue
 
             # For species name, use taxon name 1st, then the species name supplied in the occurrence file.
@@ -343,8 +343,8 @@ def _normalize_occurrence(file_path, taxon_names):
         raise Exception('No valid occurrences left.')
 
     # Overwrite the CSV file
-    with io.open(file_path, mode='wb') as csv_file:
-        csv_writer = csv.writer(csv_file)
+    with io.open(file_path, mode='wb+') as csv_file:
+        csv_writer = UnicodeCSVWriter(csv_file)
         csv_writer.writerows(new_csv)
 
     # return number of rows
@@ -352,7 +352,7 @@ def _normalize_occurrence(file_path, taxon_names):
 
 
 def _get_value(row, index):
-    return(row[index] if index >= 0 else '')
+    return(row[index] if index >= 0 else u'')
 
 
 def _is_number(s):
