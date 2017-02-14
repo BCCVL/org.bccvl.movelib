@@ -5,7 +5,8 @@ version = '1.4.3'
 
 setup(
     name='org.bccvl.movelib',
-    version=version,
+    setup_requires=['gu_scm_version'],
+    gu_scm_version=True,
     description="Data Mover base library",
     # long_description=open("README.txt").read() + "\n" +
     #                  open(os.path.join("docs", "HISTORY.txt")).read(),
@@ -31,6 +32,6 @@ setup(
         'scp': ['paramiko', 'scp'],
         'swift': ['python-swiftclient', 'python-keystoneclient'],
         'http': ['requests'],
-        'test': ['paramiko', 'scp', 'python-swiftclient', 'python-keystoneclient', 'requests'],
-    },
+        'test': ['mock', 'paramiko', 'scp', 'python-swiftclient', 'requests'],
+    }
 )
