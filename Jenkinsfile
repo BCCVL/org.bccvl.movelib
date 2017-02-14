@@ -13,7 +13,7 @@ pipeline {
             steps {
                 // environment {} is executed in node context, and there is no WORKSPACE defined
                 with_pypirc(pwd()) {
-                    sh 'pip install .'
+                    sh 'pip install -e .'
                 }
             }
 
@@ -27,7 +27,7 @@ pipeline {
                     // install test runnor
                     sh 'pip install pytest pytest-cov'
                     // TODO: use --cov-report=xml -> coverage.xml
-                    sh(script: 'pytest -v --pyargs org.bccvl.movelib --junitxml=junit.xml --cov-report=html --cov=org.bccvl.movelib',
+                    sh(script: 'pytest -v --junitxml=junit.xml --cov-report=html --cov=org.bccvl.movelib',
                        returnStatus: true)
                 }
                 // capture test result
