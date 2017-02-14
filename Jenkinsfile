@@ -12,7 +12,7 @@ pipeline {
 
             steps {
                 // environment {} is executed in node context, and there is no WORKSPACE defined
-                with_pypirc(pwd()) {
+                withPyPi(pwd()) {
                     sh 'pip install -e .'
                 }
             }
@@ -21,7 +21,7 @@ pipeline {
         stage('Test') {
 
             steps {
-                with_pypirc(pwd()) {
+                withPyPi(pwd()) {
                     // install test dependencies
                     sh 'pip install .[test]'
                     // install test runnor
@@ -61,12 +61,12 @@ pipeline {
         stage('Package') {
             when {
                 // branch accepts wildcards as well... e.g. "*/master"
-                //branch "master"
+                branch "master"
                 expression { currentBuild.result && currentBuild.result == 'SUCCESS' }
             }
             steps {
                 sh 'rm -rf build; rm -rf dist'
-                with_pypirc(pwd()) {
+                withPyPi(pwd()) {
                     // Build has to happen in correct folder or setup.py won't find MANIFEST.in file and other files
                     sh 'python setup.py register -r dev sdist bdist_wheel upload -r dev'
                 }
@@ -107,24 +107,4 @@ pipeline {
         }
     }
 
-}
-
-
-def with_pypirc(home, Closure body) {
-    withEnv(["HOME=${home}"]) {
-        configFileProvider([configFile(fileId: 'pypirc', variable: 'PYPIRC'),
-                            configFile(fileId: 'pip.conf', variable: 'PIPCONF'),
-                            configFile(fileId: 'pydistutils.cfg', variable: 'PYDISTUTILSCFG'),
-                            configFile(fileId: 'buildout.cfg', variable: 'BUILDOUTCFG')]) {
-            sh 'rm -f ~/.pypirc ~/.pydistutils.cfg ~/.pip ~/.buildout'
-            sh 'ln -s "${PYPIRC}" ~/.pypirc'
-            sh 'ln -s "${PYDISTUTILSCFG}" ~/.pydistutils.cfg'
-            sh 'mkdir ~/.pip'
-            sh 'ln -s "${PIPCONF}" ~/.pip/pip.conf'
-            sh 'mkdir ~/.buildout'
-            sh 'ln -s "${BUILDOUTCFG}" ~/.buildout/default.cfg'
-            body()
-            sh 'rm -fr ~/.pypirc ~/.pydistutils.cfg ~/.pip ~/.buildout'
-        }
-    }
 }
