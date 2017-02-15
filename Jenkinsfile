@@ -94,7 +94,7 @@ pipeline {
         }
         success {
             echo 'This will run only if successful'
-            triggerDownstream(this)
+            triggerDownstream(env.JOB_NAME, env.BRANCH_NAME, currentBuild.result)
         }
         failure {
             echo 'This will run only if failed'
