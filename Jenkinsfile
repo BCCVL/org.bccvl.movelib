@@ -94,7 +94,7 @@ pipeline {
         }
         success {
             echo 'This will run only if successful'
-            triggerDownstream()
+            triggerDownstream(this)
         }
         failure {
             echo 'This will run only if failed'
