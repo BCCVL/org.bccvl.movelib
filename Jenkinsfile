@@ -12,7 +12,7 @@ pipeline {
 
             steps {
                 // environment {} is executed in node context, and there is no WORKSPACE defined
-                withPyPi(pwd()) {
+                withPyPi() {
                     sh 'pip install -e .'
                 }
             }
@@ -21,7 +21,7 @@ pipeline {
         stage('Test') {
 
             steps {
-                withPyPi(pwd()) {
+                withPyPi() {
                     // install test dependencies
                     sh 'pip install .[test]'
                     // install test runnor
@@ -66,7 +66,7 @@ pipeline {
             }
             steps {
                 sh 'rm -rf build; rm -rf dist'
-                withPyPi(pwd()) {
+                withPyPi() {
                     // Build has to happen in correct folder or setup.py won't find MANIFEST.in file and other files
                     sh 'python setup.py register -r dev sdist bdist_wheel upload -r dev'
                 }
