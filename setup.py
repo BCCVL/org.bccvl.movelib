@@ -1,12 +1,10 @@
 from setuptools import setup, find_packages
 import os
 
-version = '1.4.3'
-
 setup(
     name='org.bccvl.movelib',
-    setup_requires=['gu_scm_version'],
-    gu_scm_version=True,
+    setup_requires=['guscmversion'],
+    guscmversion=True,
     description="Data Mover base library",
     # long_description=open("README.txt").read() + "\n" +
     #                  open(os.path.join("docs", "HISTORY.txt")).read(),
