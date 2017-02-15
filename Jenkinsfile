@@ -94,6 +94,7 @@ pipeline {
         }
         success {
             echo 'This will run only if successful'
+            sh 'env'
             triggerDownstream(this)
         }
         failure {
