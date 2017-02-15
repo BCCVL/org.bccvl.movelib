@@ -94,7 +94,7 @@ pipeline {
         }
         success {
             echo 'This will run only if successful'
-            triggerDownstream('org.bccvl.movelib', env.BRANCH_NAME)
+            //triggerDownstream('org.bccvl.movelib', env.BRANCH_NAME)
         }
         failure {
             echo 'This will run only if failed'
