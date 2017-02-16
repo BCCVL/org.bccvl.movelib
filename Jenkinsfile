@@ -61,8 +61,10 @@ pipeline {
         stage('Package') {
             when {
                 // branch accepts wildcards as well... e.g. "*/master"
-                branch "master"
-                expression { currentBuild.result && currentBuild.result == 'SUCCESS' }
+                expression {
+                    return (currentBuild.result && currentBuild.result == 'SUCCESS' &&
+                            (getGitTag() || env.BRANCH_NAME == "master"))
+                }
             }
             steps {
                 sh 'rm -rf build; rm -rf dist'
