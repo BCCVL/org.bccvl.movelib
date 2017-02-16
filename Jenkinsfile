@@ -13,6 +13,7 @@ pipeline {
             steps {
                 // environment {} is executed in node context, and there is no WORKSPACE defined
                 withPyPi() {
+                    sh 'rm -fr .eggs .cache'
                     sh 'pip install -e .'
                 }
             }
@@ -67,6 +68,7 @@ pipeline {
                 }
             }
             steps {
+                echo "${env.BRANCH_NAME}"
                 sh 'rm -rf build; rm -rf dist'
                 withPyPi() {
                     // Build has to happen in correct folder or setup.py won't find MANIFEST.in file and other files
