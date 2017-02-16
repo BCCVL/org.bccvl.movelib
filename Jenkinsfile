@@ -68,7 +68,7 @@ pipeline {
                 }
             }
             steps {
-                echo "${env.BRANCH_NAME}"
+                sh 'env'
                 sh 'rm -rf build; rm -rf dist'
                 withPyPi() {
                     // Build has to happen in correct folder or setup.py won't find MANIFEST.in file and other files
