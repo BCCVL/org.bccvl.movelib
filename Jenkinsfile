@@ -62,10 +62,8 @@ pipeline {
         stage('Package') {
             when {
                 expression {
-                    // run this step if build and test was successful
-                    // and if branch is master or we are on a tag
-                    return (currentBuild.result && currentBuild.result == 'SUCCESS' &&
-                            (env.BRANCH_NAME == "master" || (getGitTag() && env.BRANCH_NAME == null)))
+                    // check if we want to publish a package
+                    return publishPackage(currentBuild.result, env.BRANCH_NAME)
                 }
             }
             steps {
