@@ -61,14 +61,14 @@ pipeline {
 
         stage('Package') {
             when {
-                // branch accepts wildcards as well... e.g. "*/master"
                 expression {
+                    // run this step if build and test was successful
+                    // and if branch is master or we are on a tag
                     return (currentBuild.result && currentBuild.result == 'SUCCESS' &&
-                            (getGitTag() || env.BRANCH_NAME == "master"))
+                            (env.BRANCH_NAME == "master" || (getGitTag() && env.BRANCH_NAME == null)))
                 }
             }
             steps {
-                sh 'env'
                 sh 'rm -rf build; rm -rf dist'
                 withPyPi() {
                     // Build has to happen in correct folder or setup.py won't find MANIFEST.in file and other files
