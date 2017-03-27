@@ -4,7 +4,7 @@ node('docker') {
 
         stage('Checkout') {
             // clean git clone, but don't fail in case it doesn't exist yet
-            sh(script: 'git clean -x -d -f', returnStdout: true)
+            sh(script: 'git clean -x -d -f', returnStatus: true)
             checkout scm
         }
 
@@ -59,7 +59,7 @@ node('docker') {
                     if (publishPackage(currentBuild.result, env.BRANCH_NAME)) {
 
                         sh 'rm -fr build dist'
-                        sh '. ${VIRTUALENV}/bin/activate; python setup.py register -r devpi sdist bdist_wheel upload -r devpi'
+                        sh '. ${VIRTUALENV}/bin/activate; python setup.py register -r devpi sdist bdist_wheel --universal upload -r devpi'
 
                     }
 
