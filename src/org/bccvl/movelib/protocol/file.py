@@ -2,7 +2,7 @@ import logging
 import os
 import pwd
 import shutil
-from urlparse import urlparse
+from six.moves.urllib_parse import urlparse
 
 
 PROTOCOLS = ('file',)

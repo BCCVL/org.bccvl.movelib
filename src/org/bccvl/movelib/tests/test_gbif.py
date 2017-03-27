@@ -42,8 +42,8 @@ class GBIFTest(unittest.TestCase):
             return pkg_resources.resource_stream(__name__, 'data/gbif_dataset.json')
 
     #@unittest.skip("not yet implemented")
-    @mock.patch('urllib.urlopen')
-    @mock.patch('urllib.urlretrieve')
+    @mock.patch('org.bccvl.movelib.protocol.gbif.urlopen')
+    @mock.patch('org.bccvl.movelib.protocol.gbif.urlretrieve')
     def test_gbif_to_file(self, mock_urlretrieve=None, mock_urlopen=None):
         mock_urlretrieve.side_effect = self._urlretrieve
         mock_urlopen.side_effect = self._urlopen

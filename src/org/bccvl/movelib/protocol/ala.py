@@ -1,14 +1,16 @@
-import csv
+import codecs
 import datetime
 import io
 import json
 import logging
 import os
 import tempfile
-import urllib
-import requests
-from urlparse import urlparse, parse_qs
 import zipfile
+
+import requests
+from six.moves.urllib_parse import urlparse, parse_qs
+from six.moves.urllib.request import urlretrieve
+
 from org.bccvl.movelib.utils import zip_occurrence_data, UnicodeCSVReader, UnicodeCSVWriter
 
 PROTOCOLS = ('ala',)
@@ -53,6 +55,7 @@ def download(source, dest=None):
     params = parse_qs(url.query)
     qparam = params['query'][0].split(':', 1)
     lsid = None
+    lsid_list = []
     if (qparam[0] == 'lsid'):
         lsid = qparam[1]
 
@@ -98,7 +101,7 @@ def _get_species_guid_from_csv(csvfile):
     speciesColName = 'species ID - Processed'
 
     with io.open(csvfile, mode='br+') as csv_file:
-        csv_reader = csv.reader(csv_file)
+        csv_reader = UnicodeCSVReader(csv_file)
 
         # Check if csv file header has species ID column
         csv_header = next(csv_reader)
@@ -126,7 +129,7 @@ def _download_occurrence(occurrence_url, dest):
     temp_file = None
     lsid_list = []
     try:
-        temp_file, _ = urllib.urlretrieve(occurrence_url)
+        temp_file, _ = urlretrieve(occurrence_url)
         # extract data.csv file into dest
         with zipfile.ZipFile(temp_file) as z:
             data_dest = os.path.join(dest, 'data')
@@ -180,7 +183,7 @@ def _download_metadata_for_lsid(lsid_list, dest):
         results = json.loads(response.text)['searchDTOList']
 
         with io.open(metadata_file, mode='wb') as f:
-            json.dump(results, f, indent=2)
+            json.dump(results, codecs.getwriter('utf-8')(f), indent=2)
 
     except Exception as e:
         LOG.error("Could not download occurrence metadata from ALA for LSID %s : %s",
@@ -265,7 +268,7 @@ def _ala_postprocess(csvzipfile, mdfile, occurrence_url, dest):
     # Write the dataset to a file
     dataset_path = os.path.join(dest, 'ala_dataset.json')
     f = io.open(dataset_path, mode='wb')
-    json.dump(ala_dataset, f, indent=2)
+    json.dump(ala_dataset, codecs.getwriter('utf-8')(f), indent=2)
     f.close()
     dsfile = {'url': dataset_path,
               'name': 'ala_dataset.json',
@@ -297,7 +300,7 @@ def _normalize_occurrence(file_path, taxon_names):
     # Build the normalized CSV in memory, order needs to match whatever ala returns
     new_csv = [[SPECIES, LONGITUDE, LATITUDE, UNCERTAINTY, EVENT_DATE, YEAR, MONTH]]
 
-    with io.open(file_path, mode='br') as csv_file:
+    with io.open(file_path, mode='rb') as csv_file:
         csv_reader = UnicodeCSVReader(csv_file)
 
         # header of csv file
@@ -343,7 +346,7 @@ def _normalize_occurrence(file_path, taxon_names):
         raise Exception('No valid occurrences left.')
 
     # Overwrite the CSV file
-    with io.open(file_path, mode='wb+') as csv_file:
+    with io.open(file_path, mode='bw+') as csv_file:
         csv_writer = UnicodeCSVWriter(csv_file)
         csv_writer.writerows(new_csv)
 

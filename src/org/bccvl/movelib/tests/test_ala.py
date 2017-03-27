@@ -3,7 +3,7 @@ import pkg_resources
 import shutil
 import tempfile
 import unittest
-from urlparse import urlparse, parse_qs
+from six.moves.urllib_parse import urlparse, parse_qs
 
 import mock
 
@@ -34,7 +34,7 @@ class ALATest(unittest.TestCase):
                         dest)
             return (dest, None)
 
-    @mock.patch('urllib.urlretrieve')
+    @mock.patch('org.bccvl.movelib.protocol.ala.urlretrieve')
     def test_ala_to_file(self, mock_urlretrieve=None):
         mock_urlretrieve.side_effect = self._urlretrieve
         # mock urllib.urlretrieve ....
@@ -57,7 +57,7 @@ class ALATest(unittest.TestCase):
         self.assertTrue(os.path.exists(os.path.join(self.tmpdir, 'ala_dataset.json')))
         self.assertTrue(os.path.exists(os.path.join(self.tmpdir, 'ala_occurrence.zip')))
 
-    @mock.patch('urllib.urlretrieve')
+    @mock.patch('org.bccvl.movelib.protocol.ala.urlretrieve')
     def test_ala_qid_to_file(self, mock_urlretrieve=None):
         mock_urlretrieve.side_effect = self._urlretrieve
         # mock urllib.urlretrieve ....

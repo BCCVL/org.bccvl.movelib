@@ -29,4 +29,4 @@ class FileTest(unittest.TestCase):
         # verify destination file
         dest_file = os.path.join(self.tmpdir, 'test.csv')
         self.assertTrue(os.path.exists(dest_file))
-        self.assertEqual(open(dest_file).read(), pkg_resources.resource_string(__name__, 'data/test.csv'))
+        self.assertEqual(open(dest_file, 'rb').read(), pkg_resources.resource_string(__name__, 'data/test.csv'))
