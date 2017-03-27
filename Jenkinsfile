@@ -21,7 +21,7 @@ node('docker') {
 
                 stage('Test') {
                     // install test depenhencios
-                    sh '. ${VIRTUALENV}/bin/activate; pip install .[test]'
+                    sh '. ${VIRTUALENV}/bin/activate; pip install -e .[test]'
                     // install test runner
                     sh '. ${VIRTUALENV}/bin/activate; pip install pytest pytest-cov'
                     // TODO: use --cov-report=xml -> coverage.xml
