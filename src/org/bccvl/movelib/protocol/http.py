@@ -54,7 +54,7 @@ def download(source, dest=None):
         with open(dest_path, 'wb') as f:
             for chunk in response.iter_content(chunk_size=4096):
                 if chunk:  # filter out keep-alive new chunks
-                    f.write(chunk.encode('utf-8'))
+                    f.write(chunk)
 
         # TODO: check content-disposition header for filename?
         htmlfile = {
