@@ -113,6 +113,12 @@ def _download_occurrence_by_lsid(lsid, dest):
                     if not row.has_key('decimalLongitude') or not row.has_key('decimalLatitude') or \
                        not _is_number(row['decimalLongitude']) or not _is_number(row['decimalLatitude']):
                         continue
+
+                    # Check that the coordinates are in the range
+                    if (row['decimalLongitude'] > 180.0 or row['decimalLongitude'] < -180.0 or \
+                       row['decimalLatitude'] > 90.0 or row['decimalLatitude'] < -90.0):
+                        raise Exception('Dataset contains out-of-range longitude/latitude value. Please download manually and fix the issue.')
+
                     # save the dataset key
                     if row['datasetKey'] not in datasetkeys:
                         datasetkeys.append(row['datasetKey'])

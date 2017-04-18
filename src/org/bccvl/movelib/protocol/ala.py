@@ -335,6 +335,10 @@ def _normalize_occurrence(file_path, taxon_names):
             if u'true' in row[colnumber:]:
                 continue
 
+            # Check that the coordinates are in the range
+            if (lon > 180.0 or lon < -180.0 or lat > 90.0 or lat < -90.0):
+                raise Exception('Dataset contains out-of-range longitude/latitude value. Please download manually and fix the issue.')
+
             # For species name, use taxon name 1st, then the species name supplied in the occurrence file.
             new_csv.append([taxon_names.get(guid, species), lon, lat, uncertainty, date, year, month])
 

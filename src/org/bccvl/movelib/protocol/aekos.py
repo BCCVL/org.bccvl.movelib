@@ -247,6 +247,12 @@ def _add_trait_env_data(resultfile, fieldname, trait_env_data):
         if 'decimalLongitude' not in row or 'decimalLatitude' not in row:
             continue
 
+        # Check that the coordinates are in the range
+        if (row['decimalLongitude'] > 180.0 or row['decimalLongitude'] < -180.0 or \
+           row['decimalLatitude'] > 90.0 or row['decimalLatitude'] < -90.0):
+            raise Exception('Dataset contains out-of-range longitude/latitude value. Please download manually and fix the issue.')
+
+
         # Save the data with date, as it can have multiple records
         # collected at different dates.
         # Potentially can have multiple records of traits/env variables for a
