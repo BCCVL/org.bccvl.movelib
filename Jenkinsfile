@@ -4,7 +4,7 @@ node('docker') {
 
         stage('Checkout') {
             // clean git clone, but don't fail in case it doesn't exist yet
-            sh(script: 'git clean -x -d -f', returnStdout: true)
+            sh(script: 'git clean -x -d -f', returnStatus: true)
             checkout scm
         }
 
@@ -21,11 +21,11 @@ node('docker') {
 
                 stage('Test') {
                     // install test depenhencios
-                    sh '. ${VIRTUALENV}/bin/activate; pip install .[test]'
+                    sh '. ${VIRTUALENV}/bin/activate; pip install -e .[test]'
                     // install test runner
                     sh '. ${VIRTUALENV}/bin/activate; pip install pytest pytest-cov'
                     // TODO: use --cov-report=xml -> coverage.xml
-                    sh(script: '. ${VIRTUALENV}/bin/activate; pytest -v --junitxml=junit.xml --cov-report=html --cov=org.bccvl.movelib',
+                    sh(script: '. ${VIRTUALENV}/bin/activate; pytest -v --junitxml=junit.xml --cov-report=html --cov=org.bccvl.movelib src',
                        returnStatus: true)
 
                     // capture test result
@@ -59,7 +59,7 @@ node('docker') {
                     if (publishPackage(currentBuild.result, env.BRANCH_NAME)) {
 
                         sh 'rm -fr build dist'
-                        sh '. ${VIRTUALENV}/bin/activate; python setup.py register -r devpi sdist bdist_wheel upload -r devpi'
+                        sh '. ${VIRTUALENV}/bin/activate; python setup.py register -r devpi sdist bdist_wheel --universal upload -r devpi'
 
                     }
 

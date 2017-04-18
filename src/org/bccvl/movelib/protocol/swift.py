@@ -3,7 +3,7 @@ import os
 import re
 import tempfile
 import time
-from urlparse import urlsplit
+from six.moves.urllib_parse import urlsplit
 
 from swiftclient.service import SwiftService, SwiftUploadObject
 

@@ -1,14 +1,17 @@
-import Cookie
+import base64
 import csv
 import codecs
 import hashlib
+import io
 import os
 import socket
 import struct
 from time import time
-from urllib import quote
-from urlparse import urlsplit
 import zipfile
+
+import six
+from six.moves import http_cookies as cookies
+from six.moves.urllib_parse import quote, urlsplit
 
 
 class AuthTkt(object):
@@ -28,12 +31,14 @@ class AuthTkt(object):
     def ticket(self):
         v = self.cookie_value()
         if self.base64:
-            return v.encode('base64').strip().replace('\n', '')
+            enc = base64.b64encode(v.encode('utf-8'))
+            enc = enc.decode('utf-8')
+            return enc.strip().replace('\n', '')
         return v
 
     def cookie(self, name, **kwargs):
         name = str(name)
-        c = Cookie.SimpleCookie()
+        c = cookies.SimpleCookie()
         c[name] = self.ticket()
 
         kwargs.setdefault('path', '/')
@@ -49,12 +54,13 @@ class AuthTkt(object):
         return '!'.join(parts)
 
     def _digest(self):
-        return hashlib.md5(self._digest0() + self.secret).hexdigest()
+        return hashlib.md5(self._digest0().encode('utf-8') + self.secret.encode('utf-8')).hexdigest()
 
     def _digest0(self):
         parts = (self._encode_ip(self.ip), self._encode_ts(self.ts),
-                 self.secret, self.uid, '\0', self.tokens, '\0', self.data)
-        return hashlib.md5(''.join(parts)).hexdigest()
+                 self.secret.encode('utf-8'), self.uid.encode('utf-8'), b'\0',
+                 self.tokens.encode('utf-8'), b'\0', self.data.encode('utf-8'))
+        return hashlib.md5(b''.join(parts)).hexdigest()
 
     def _encode_ip(self, ip):
         return socket.inet_aton(ip)
@@ -136,16 +142,20 @@ class UTF8Recoder:
         """
         Try some popular encodings to convert input to unicode
         """
-        line = self.reader.next()
+        line = next(self.reader)
         for codec in ('utf-8', 'cp1252', 'mac_roman', 'latin_1', 'ascii'):
             try:
                 line = line.decode(codec)
                 break
             except UnicodeDecodeError as e:
                 pass
-        if not isinstance(line, unicode):
-            raise UnicodeDecodeError("can't decode input line to unicode")
-        return line.encode('utf-8')
+        if six.PY2:
+            # in py2 we have to re-encode in defined encoding
+            return line.encode('utf-8')
+        # in py3 we can just return unicode
+        return line
+
+    __next__ = next
 
 
 class UnicodeCSVReader(object):
@@ -159,7 +169,7 @@ class UnicodeCSVReader(object):
         """
         Assumes utf-8 encoding and ignores all decoding errors.
 
-        f ... an iterator (maybe file object opened in text mode)
+        f ... an iterator (maybe file object opened in binary mode)
         """
         # build a standard csv reader, that works on utf-8 strings
         f = UTF8Recoder(f)
@@ -175,7 +185,13 @@ class UnicodeCSVReader(object):
         """
         return next row frow csv.reader, each cell as unicode again
         """
-        return [cell.decode('utf-8') for cell in self.reader.next()]
+        if six.PY2:
+            # in py2 we have to decode csv parse result from utf-8 to unicode
+            return [cell.decode('utf-8') for cell in next(self.reader)]
+        # in py3 we already get unicode
+        return next(self.reader)
+
+    __next__ = next
 
 
 class UnicodeCSVWriter(object):
@@ -187,13 +203,19 @@ class UnicodeCSVWriter(object):
         """
         f ... an open file object that expects byte strings as input.
         """
+        if six.PY3:
+            # wrap the bytesio into TextIOWrapper
+            f = codecs.getwriter('utf-8')(f) # io.TextIOWrapper(f, encoding='utf-8')
         self.writer = csv.writer(f)
 
     def writerow(self, row):
         """
         encode each cell value as utf-8 and write to writer as usual
         """
-        self.writer.writerow([cell.encode('utf-8') for cell in row])
+        if six.PY3:
+            self.writer.writerow(row)
+        else:
+            self.writer.writerow([cell.encode('utf-8') if isinstance(cell, unicode) else cell for cell in row])
 
     def writerows(self, rows):
         """

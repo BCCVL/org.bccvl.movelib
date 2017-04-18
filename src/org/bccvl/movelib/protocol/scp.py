@@ -3,7 +3,7 @@ import logging
 import os
 import pwd
 import tempfile
-from urlparse import urlsplit, urlunsplit
+from six.moves.urllib_parse import urlsplit, urlunsplit
 
 from paramiko import SSHClient, AutoAddPolicy
 from scp import SCPClient, SCPException

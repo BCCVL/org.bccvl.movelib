@@ -1,10 +1,13 @@
 import importlib
+import logging
 import os
 import shutil
 import tempfile
-from urlparse import urlsplit
+from six.moves.urllib_parse import urlsplit
 import warnings
 
+
+LOG = logging.getLogger(__name__)
 # TODO: implement sftp, so that ssh can be used as source
 
 SERVICES = {}
@@ -17,8 +20,10 @@ for service in ('ala', 'gbif', 'http', 'scp', 'swift', 'file', 'aekos'):
             if proto in SERVICES:
                 warnings.warn('Duplicate protocol handler found: {}'.format(proto))
             SERVICES[proto] = module
+        LOG.debug('Movelib service {} available'.format(service))
     except ImportError as e:
         # TODO: should we output some warning here?
+        LOG.debug('Movelib service {} not available'.format(service))
         pass
 
 

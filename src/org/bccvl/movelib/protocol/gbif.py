@@ -1,4 +1,4 @@
-import csv
+import codecs
 import datetime
 import io
 import json
@@ -6,10 +6,12 @@ import logging
 import os
 import tempfile
 import zipfile
-import urllib
 import shutil
-import codecs
-from urlparse import urlparse, parse_qs
+
+from six.moves.urllib_parse import urlparse, parse_qs
+from six.moves.urllib.request import urlretrieve, urlopen
+
+from org.bccvl.movelib.utils import UnicodeCSVWriter
 
 
 PROTOCOLS = ('gbif',)
@@ -103,14 +105,14 @@ def _download_occurrence_by_lsid(lsid, dest):
         while offset < count:
             occurrence_url = settings['occurrence_url'].format(
                 lsid=lsid, offset=offset, limit=limit)
-            temp_file, _ = urllib.urlretrieve(occurrence_url)
+            temp_file, _ = urlretrieve(occurrence_url)
             with open(temp_file) as f:
                 t1 = json.load(f)
                 count = t1['count']
                 offset += t1['limit']
                 for row in t1['results']:
                     # TODO: isn't there a builtin for this?
-                    if not row.has_key('decimalLongitude') or not row.has_key('decimalLatitude') or \
+                    if 'decimalLongitude' not in row or 'decimalLatitude' not in row or \
                        not _is_number(row['decimalLongitude']) or not _is_number(row['decimalLatitude']):
                         continue
 
@@ -134,7 +136,7 @@ def _download_occurrence_by_lsid(lsid, dest):
         # Write data as a CSV file
         os.mkdir(data_dest)
         with io.open(os.path.join(data_dest, 'gbif_occurrence.csv'), mode='wb') as csv_file:
-            csv_writer = csv.writer(csv_file)
+            csv_writer = UnicodeCSVWriter(csv_file)
             csv_writer.writerows(data)
 
         # Get citation for each dataset from the dataset details
@@ -166,7 +168,7 @@ def _get_dataset_citation(dskeylist, destfilepath):
         with codecs.open(destfilepath, 'w', 'utf-8') as citfile:
             for key in dskeylist:
                 dataset_url = settings['dataset_url'].format(datasetkey=key)
-                f = urllib.urlopen(dataset_url)
+                f = urlopen(dataset_url)
                 data = json.load(f)
                 citation = data.get('citation', {}).get('text')
                 if citation:
@@ -188,8 +190,8 @@ def _download_metadata_for_lsid(lsid, dest):
     # Get occurrence metadata
     metadata_url = settings['metadata_url'].format(lsid=lsid)
     try:
-        metadata_file, _ = urllib.urlretrieve(metadata_url,
-                                              os.path.join(dest, 'gbif_metadata.json'))
+        metadata_file, _ = urlretrieve(metadata_url,
+                                       os.path.join(dest, 'gbif_metadata.json'))
     except Exception as e:
         LOG.error("Could not download occurrence metadata from GBIF for LSID %s : %s",
                   lsid, e, exc_info=True)
@@ -250,7 +252,7 @@ def _gbif_postprocess(csvfile, mdfile, lsid, dest, csvRowCount):
     # Write the dataset to a file
     dataset_path = os.path.join(dest, 'gbif_dataset.json')
     f = io.open(dataset_path, mode='wb')
-    json.dump(gbif_dataset, f, indent=2)
+    json.dump(gbif_dataset, codecs.getwriter('utf-8')(f), indent=2)
     f.close()
     dsfile = {'url': dataset_path,
               'name': 'gbif_dataset.json',

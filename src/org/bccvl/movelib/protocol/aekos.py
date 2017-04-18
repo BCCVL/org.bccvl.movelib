@@ -1,5 +1,7 @@
-import csv
+import codecs
+from datetime import datetime
 import io
+import itertools
 import json
 import logging
 import os
@@ -7,22 +9,22 @@ import requests
 import shutil
 import tempfile
 import zipfile
-import itertools
-import urllib
-from urlparse import urlparse, parse_qs
-from datetime import datetime
+
+from six.moves.urllib_parse import urlencode, urlparse, parse_qs
+
+from org.bccvl.movelib.utils import UnicodeCSVWriter, UnicodeCSVReader
 
 
-SPECIES = 'species'
-LONGITUDE = 'lon'
-LATITUDE = 'lat'
-UNCERTAINTY = 'uncertainty'
-EVENT_DATE = 'date'
-YEAR = 'year'
-MONTH = 'month'
-CITATION = 'citation'
-METADATA = 'metadata'
-LOCATION_ID = 'locationID'
+SPECIES = u'species'
+LONGITUDE = u'lon'
+LATITUDE = u'lat'
+UNCERTAINTY = u'uncertainty'
+EVENT_DATE = u'date'
+YEAR = u'year'
+MONTH = u'month'
+CITATION = u'citation'
+METADATA = u'metadata'
+LOCATION_ID = u'locationID'
 
 PROTOCOLS = ('aekos',)
 
@@ -75,7 +77,7 @@ def download(source, dest=None):
             # TODO: still need to support NA's in columns
             occur_file = os.path.join(dest, 'occurrence_data.json')
             occurrence_url = SETTINGS['occurrence_url'].format(
-                urllib.urlencode(params, True))
+                urlencode(params, True))
             _download_as_file(occurrence_url, occur_file)
             csv_file = _process_occurrence_data(occur_file, dest)
             md_file = _download_metadata(params, dest)
@@ -92,7 +94,7 @@ def download(source, dest=None):
             if params.get('traitName', None) and params.get('traitName')[0] != 'None':
                 trait_file = os.path.join(dest, 'trait_data.json')
                 trait_url = SETTINGS['traitdata_url'].format(
-                    urllib.urlencode(params, True))
+                    urlencode(params, True))
                 _download_as_file(trait_url, trait_file)
                 src_urls.append(trait_url)
 
@@ -100,7 +102,7 @@ def download(source, dest=None):
             if params.get('envVarName', None) and params.get('envVarName')[0] != 'None':
                 env_file = os.path.join(dest, 'env_data.json')
                 env_url = SETTINGS['environmentdata_url'].format(
-                    urllib.urlencode(params, True))
+                    urlencode(params, True))
                 _download_as_file(env_url, env_file)
                 src_urls.append(env_url)
 
@@ -178,14 +180,14 @@ def _process_trait_env_data(traitfile, envfile, destdir):
 def _save_as_csv(trait_env_data, headers, datadir):
     # Save citations and metadata as csv file
     colhders = [LONGITUDE, LATITUDE, SPECIES, LOCATION_ID]
-    otrhders = ['trait_date', 'trait_citation', 'trait_metadata',
-                'env_date', 'env_citation', 'env_metadata']
+    otrhders = [u'trait_date', u'trait_citation', u'trait_metadata',
+                u'env_date', u'env_citation', u'env_metadata']
     with io.open(os.path.join(datadir, 'aekos_citation.csv'),
                  mode='wb') as cit_file:
-        cit_writer = csv.writer(cit_file)
+        cit_writer = UnicodeCSVWriter(cit_file)
         cit_writer.writerow(colhders + otrhders)
 
-        for item in trait_env_data.itervalues():
+        for item in trait_env_data.values():
             for traits, envvars in _product(item['traits'], item['variables']):
                 # Add the event date, citation and metadata for trait/env data
                 row = [item.get(i, '') for i in colhders] + \
@@ -200,9 +202,9 @@ def _save_as_csv(trait_env_data, headers, datadir):
     colhders = [LONGITUDE, LATITUDE, EVENT_DATE, SPECIES, LOCATION_ID, MONTH, YEAR]
     with io.open(os.path.join(datadir, 'aekos_traits_env.csv'),
                  mode='wb') as csv_file:
-        csv_writer = csv.writer(csv_file)
+        csv_writer = UnicodeCSVWriter(csv_file)
         csv_writer.writerow(colhders + headers)
-        for key, item in trait_env_data.iteritems():
+        for key, item in trait_env_data.items():
             for traits, envvars in _product(item['traits'], item['variables']):
                 row = [item.get(i, '') for i in colhders] + \
                     ([''] * len(headers))
@@ -275,7 +277,7 @@ def _add_trait_env_data(resultfile, fieldname, trait_env_data):
             # (i.e. 30) days from collection, and same location.
             found = False
             if fieldname != 'traits':
-                for item in trait_env_data.itervalues():
+                for item in trait_env_data.values():
                     if item[LOCATION_ID] == row.get('locationID') and \
                        _days(item.get(EVENT_DATE), row.get('eventDate')) <= 30:
                         item[fieldname].append(data)
@@ -326,7 +328,7 @@ def _process_occurrence_data(occurrencefile, destdir):
     citationList = []
     with io.open(os.path.join(datadir, 'aekos_occurrence.csv'),
                  mode='wb') as csv_file:
-        csv_writer = csv.writer(csv_file)
+        csv_writer = UnicodeCSVWriter(csv_file)
         csv_writer.writerow(headers)
         for row in data:
             # Skip record if location data is not valid.
@@ -350,7 +352,7 @@ def _process_occurrence_data(occurrencefile, destdir):
 
     # Save citations as file
     with io.open(os.path.join(datadir, 'aekos_citation.txt'),
-                 mode='wb') as cit_file:
+                 mode='w') as cit_file:
         for citation in citationList:
             cit_file.write(citation + '\n')
 
@@ -373,7 +375,7 @@ def _download_metadata(params, dest):
     # Get species metadata
     md_file = os.path.join(dest, 'aekos_metadata.json')
     metadata_url = SETTINGS['metadata_url'].format(
-        urllib.urlencode(params, True))
+        urlencode(params, True))
     try:
         _download_as_file(metadata_url, md_file)
     except Exception as e:
@@ -439,7 +441,7 @@ def _aekos_postprocess(csvfile, mdfile, dest, csvRowCount,
     # Write the dataset to a file
     dataset_path = os.path.join(dest, 'aekos_dataset.json')
     f = io.open(dataset_path, mode='wb')
-    json.dump(aekos_dataset, f, indent=2)
+    json.dump(aekos_dataset, codecs.getwriter('utf-8')(f), indent=2)
     f.close()
     dsfile = {'url': dataset_path,
               'name': 'aekos_dataset.json',

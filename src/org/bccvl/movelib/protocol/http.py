@@ -2,7 +2,7 @@ import logging
 import os
 import requests
 import tempfile
-from urlparse import urlsplit
+from six.moves.urllib_parse import urlsplit
 
 
 PROTOCOLS = ('http', 'https')
@@ -51,10 +51,10 @@ def download(source, dest=None):
             dest_path = dest
 
         # TODO: could check response.headers['content-length'] to decide streaming or not
-        with open(dest_path, 'w') as f:
+        with open(dest_path, 'wb') as f:
             for chunk in response.iter_content(chunk_size=4096):
                 if chunk:  # filter out keep-alive new chunks
-                    f.write(chunk)
+                    f.write(chunk.encode('utf-8'))
 
         # TODO: check content-disposition header for filename?
         htmlfile = {

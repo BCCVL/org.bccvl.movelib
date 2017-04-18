@@ -25,6 +25,7 @@ setup(
     zip_safe=False,
     install_requires=[
         'setuptools',
+        'six'
     ],
     extras_require={
         'scp': ['paramiko', 'scp'],
