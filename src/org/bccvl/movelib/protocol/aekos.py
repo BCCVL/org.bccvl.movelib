@@ -397,7 +397,7 @@ def _aekos_postprocess(csvfile, mdfile, dest, csvRowCount,
     taxon_name = scientificName
     if mdfile:
         md = json.load(open(mdfile, 'r'))
-        taxon_name = md[0]['scientificName'] or scientificName
+        taxon_name = md[0].get('speciesName') or scientificName
 
     # Generate aekos_dataset.json
     imported_date = datetime.now().strftime('%d/%m/%Y')
