@@ -336,8 +336,12 @@ def _normalize_occurrence(file_path, taxon_names):
             guid = _get_value(row, indexes[u'species ID - Processed'])
             species = _get_value(row, indexes[u'Species - matched'])
 
-            # TODO: isn't there a builtin for this?
-            if not _is_number(lon) or not _is_number(lat):
+            # Validate lat/lon
+            try:
+                lon = float(lon)
+                lat = float(lat)
+            except (ValueError, TypeError):
+                # ignore rows, where lat/lon are not numbers
                 continue
             # Either species ID or species name must present
             if not guid and not species:
@@ -368,11 +372,3 @@ def _normalize_occurrence(file_path, taxon_names):
 
 def _get_value(row, index):
     return(row[index] if index >= 0 else u'')
-
-
-def _is_number(s):
-    try:
-        float(s)
-        return True
-    except ValueError:
-        return False
