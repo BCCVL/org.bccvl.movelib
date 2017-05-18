@@ -8,7 +8,6 @@ node('docker') {
             checkout scm
         }
 
-
         // start up build container
         def img = docker.image('python:2')
         img.inside() {
@@ -43,14 +42,9 @@ node('docker') {
                         ]
                     ])
                     // publish html coverage report
-                    publishHTML(target: [
-                        allowMissing: false,
-                        alwaysLinkToLastBuild: false,
-                        keepAll: true,
-                        reportDir: 'htmlcov',
-                        reportFiles: 'index.html',
-                        reportName: 'Coverage Report'
-                    ])
+                    step([$class: 'CoberturaPublisher',
+                          coberturaReportFile: 'coverage.xml']
+                    )
 
                 }
 
