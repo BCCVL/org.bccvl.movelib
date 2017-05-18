@@ -181,7 +181,8 @@ def _download_metadata_for_lsid(lsid_list, dest):
         response = requests.post(metadata_url, json=lsid_list)
         metadata_file = os.path.join(dest, 'ala_metadata.json')
         results = json.loads(response.text)['searchDTOList']
-
+        # TODO: bulk lookp may return null/None for unknown or outdated lsid
+        #       should we try to walk lsi d change history here?
         with io.open(metadata_file, mode='wb') as f:
             json.dump(results, codecs.getwriter('utf-8')(f), indent=2)
 
@@ -207,6 +208,13 @@ def _ala_postprocess(csvzipfile, mdfile, occurrence_url, dest):
         sp_metadata = json.load(open(mdfile))
 
         for md in sp_metadata:
+            if not md:
+                # we were note able to get species metadata for some of our lsids...
+                # may happen because lsids change over time
+                # TODO: ... should we try to walk the lsid change history to find most
+                #           recent lsid? (links may be missing though)
+                #           see _download_metadata_for_lsid
+                continue
             # TODO: is this the correct bit? (see plone dataset import )
             guid = md.get('guid')
             if guid:
