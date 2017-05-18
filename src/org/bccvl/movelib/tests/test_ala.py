@@ -59,6 +59,7 @@ class ALATest(unittest.TestCase):
 
     @mock.patch('org.bccvl.movelib.protocol.ala.urlretrieve')
     def test_ala_qid_to_file(self, mock_urlretrieve=None):
+        # FIXME: we do live metadata lookup here
         mock_urlretrieve.side_effect = self._urlretrieve
         # mock urllib.urlretrieve ....
         #        return zip file with data.csv and citation.csv
