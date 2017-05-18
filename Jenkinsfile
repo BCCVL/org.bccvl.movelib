@@ -9,6 +9,7 @@ node('docker') {
         }
 
         // start up build container
+        // TODO: we should pull image from some local resource
         def img = docker.image('python:2')
         img.inside() {
 
@@ -24,7 +25,7 @@ node('docker') {
                     // install test runner
                     sh '. ${VIRTUALENV}/bin/activate; pip install pytest pytest-cov'
                     // TODO: use --cov-report=xml -> coverage.xml
-                    sh(script: '. ${VIRTUALENV}/bin/activate; pytest -v --junitxml=junit.xml --cov-report=html --cov=org.bccvl.movelib src',
+                    sh(script: '. ${VIRTUALENV}/bin/activate; pytest -v --junitxml=junit.xml --cov-report=xml --cov=org.bccvl.movelib src',
                        returnStatus: true)
 
                     // capture test result
