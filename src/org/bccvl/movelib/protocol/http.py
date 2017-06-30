@@ -35,7 +35,7 @@ def download(source, dest=None):
         if cookie:
             s.cookies.set(**cookie)
 
-        response = s.get(source['url'], stream=True, verify=verify)
+        response = s.get(source['url'].encode('utf-8'), stream=True, verify=verify)
         # raise exception case of error
         response.raise_for_status()
 
