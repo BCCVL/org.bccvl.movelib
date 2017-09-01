@@ -28,11 +28,12 @@ LOCATION_ID = u'locationID'
 
 PROTOCOLS = ('aekos',)
 
+# Limit rows to 100 due to timeout constraint
 SETTINGS = {
-    "metadata_url": "https://api.aekos.org.au/v1/speciesSummary.json?{0}",
-    "occurrence_url": "https://api.aekos.org.au/v1/speciesData.json?{0}&rows=0",
-    "traitdata_url": "https://api.aekos.org.au/v1/traitData.json?{0}&rows=0",
-    "environmentdata_url": "https://api.aekos.org.au/v1/environmentData.json?{0}&rows=0",
+    "metadata_url": "https://test.api.aekos.org.au/v2/speciesSummary.json",
+    "occurrence_url": "https://test.api.aekos.org.au/v2/speciesData.json?rows=100",
+    "traitdata_url": "https://test.api.aekos.org.au/v2/traitData.json?rows=100",
+    "environmentdata_url": "https://test.api.aekos.org.au/v2/environmentData.json?rows=100",
 }
 
 """
@@ -76,9 +77,8 @@ def download(source, dest=None):
             # create dataset and push to destination
             # TODO: still need to support NA's in columns
             occur_file = os.path.join(dest, 'occurrence_data.json')
-            occurrence_url = SETTINGS['occurrence_url'].format(
-                urlencode(params, True))
-            _download_as_file(occurrence_url, occur_file)
+            occurrence_url = SETTINGS['occurrence_url']
+            _download_as_file(occurrence_url, params, occur_file)
             csv_file = _process_occurrence_data(occur_file, dest)
             md_file = _download_metadata(params, dest)
             ds_file = _aekos_postprocess(csv_file['url'], md_file['url'], dest,
@@ -91,19 +91,17 @@ def download(source, dest=None):
             # and fetch files
             src_urls = []
             trait_file = None
-            if params.get('traitName', None) and params.get('traitName')[0] != 'None':
+            if params.get('traitNames', None) and params.get('traitNames')[0] != 'None':
                 trait_file = os.path.join(dest, 'trait_data.json')
-                trait_url = SETTINGS['traitdata_url'].format(
-                    urlencode(params, True))
-                _download_as_file(trait_url, trait_file)
+                trait_url = SETTINGS['traitdata_url']
+                _download_as_file(trait_url, params, trait_file)
                 src_urls.append(trait_url)
 
             env_file = None
-            if params.get('envVarName', None) and params.get('envVarName')[0] != 'None':
+            if params.get('varNames', None) and params.get('varNames')[0] != 'None':
                 env_file = os.path.join(dest, 'env_data.json')
-                env_url = SETTINGS['environmentdata_url'].format(
-                    urlencode(params, True))
-                _download_as_file(env_url, env_file)
+                env_url = SETTINGS['environmentdata_url']
+                _download_as_file(env_url, params, env_file)
                 src_urls.append(env_url)
 
             # Merge traits and environment data to a csv file for
@@ -128,18 +126,21 @@ def download(source, dest=None):
             if tmpfile and os.path.exists(tmpfile):
                 os.remove(tmpfile)
 
-
-def _download_as_file(dataurl, dest_file):
-    r = requests.get(dataurl, stream=True)
-    r.raise_for_status()
-    if r.status_code == 200:
-        with open(dest_file, 'wb') as f:
-            r.raw.decode_content = True
-            shutil.copyfileobj(r.raw, f)
-    else:
-        raise Exception(
-            'Fail to download from Aekos: status= {}'.format(r.status_code))
-
+# Download aekos dataset as a multiple json-response file i.e. consists of multiple json responses.
+# Due to timeout constraint, shall limit max number of records requested to 100.
+def _download_as_file(dataurl, data, dest_file):
+    nexturl = dataurl
+    with open(dest_file, 'wb') as f:
+        while nexturl:
+            r = requests.post(nexturl, json=data)
+            r.raise_for_status()
+            if r.status_code == 200:
+                f.write(r.text)
+                f.write(os.linesep)
+                nexturl = r.links.get("next", {}).get('url')
+            else:
+                raise Exception(
+                    'Fail to download from Aekos: status= {}'.format(r.status_code))
 
 def _process_trait_env_data(traitfile, envfile, destdir):
     # Return a dictionary (longitude, latitude) as key
@@ -238,8 +239,8 @@ def _add_trait_env_data(resultfile, fieldname, trait_env_data):
     if not resultfile:
         return nameList, []
 
-    results = json.load(io.open(resultfile))
-    resphdrfield = 'traitNames' if fieldname == 'traits' else 'envVarNames'
+    results = _load_multi_json_responses(resultfile)
+    resphdrfield = 'traitNames' if fieldname == 'traits' else 'varNames'
     speciesList = results['responseHeader'].get(
         'params', {}).get('speciesNames', [])
     nameList = results['responseHeader'].get(
@@ -263,6 +264,10 @@ def _add_trait_env_data(resultfile, fieldname, trait_env_data):
         valueList = row.get(fieldname, [])
 
         if valueList:
+            # rename fields to common names
+            newNames = {'traitName': 'name', 'traitValue': 'value', 'traitUnit': 'unit'} if fieldname == 'traits' \
+                    else {'varName': 'name', 'varValue': 'value', 'varUnit': 'unit'}
+            valueList = _renameFields(valueList, newNames)
             data = {
                 'value': valueList,
                 'metadata': {
@@ -301,6 +306,10 @@ def _add_trait_env_data(resultfile, fieldname, trait_env_data):
     return nameList, speciesList
 
 
+def _renameFields(dataList, newNames):
+    return([{ newNames.get(name, name) : value for name, value in record.items()} for record in dataList])
+
+
 def _days(date1, date2):
     return abs((datetime.strptime(date1, '%Y-%m-%d') - datetime.strptime(date2, '%Y-%m-%d')).days)
 
@@ -312,12 +321,21 @@ def _addName(recordList, nameList):
         if name and name not in nameList:
             nameList.append(name)
 
+def _load_multi_json_responses(jsonfile):
+    response = {"response": [], "responseHeader": {}}
+    with io.open(jsonfile) as f:
+        for line in f:
+            resp = json.loads(line)
+            response["response"] += resp.get("response", [])
+            if not response["responseHeader"] and resp.get("responseHeader", {}):
+                response["responseHeader"] = resp.get("responseHeader")
+    return response
 
 def _process_occurrence_data(occurrencefile, destdir):
     # Get the occurrence data
     datadir = os.path.join(destdir, 'data')
     os.mkdir(datadir)
-    occurrdata = json.load(io.open(occurrencefile))
+    occurrdata = _load_multi_json_responses(occurrencefile)
     data = occurrdata['response']
 
     # Extract valid occurrence records
@@ -336,8 +354,8 @@ def _process_occurrence_data(occurrencefile, destdir):
                 continue
 
             # Add citation if not already included
-            citation = row.get('bibliographicCitation', '').strip()
-            scientificName = row.get('scientificName', '').strip()
+            citation = (row.get('bibliographicCitation', '') or '').strip()
+            scientificName = (row.get('scientificName') or row.get('taxonRemarks', '')).strip()
             if citation and citation not in citationList:
                 citationList.append(row['bibliographicCitation'])
             csv_writer.writerow([scientificName, row['decimalLongitude'],
@@ -374,10 +392,19 @@ def _download_metadata(params, dest):
     """
     # Get species metadata
     md_file = os.path.join(dest, 'aekos_metadata.json')
-    metadata_url = SETTINGS['metadata_url'].format(
-        urlencode(params, True))
+    metadata_url = SETTINGS['metadata_url']
     try:
-        _download_as_file(metadata_url, md_file)
+        # Download as multiple-response file
+        _download_as_file(metadata_url, params, md_file)
+
+        # convert multi-json-response file to json file.
+        # each json response is a list
+        response = []
+        with io.open(md_file) as f:
+            for line in f:
+                response += json.loads(line)
+        with io.open(md_file, 'wb') as f:
+            json.dump(response, f)
     except Exception as e:
         LOG.error(
             "Could not download occurrence metadata from AEKOS for %s : %s",
