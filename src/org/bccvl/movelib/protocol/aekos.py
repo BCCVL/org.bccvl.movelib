@@ -28,12 +28,12 @@ LOCATION_ID = u'locationID'
 
 PROTOCOLS = ('aekos',)
 
-# Limit rows to 100 due to timeout constraint
+# Limit rows to 20 due to timeout constraint
 SETTINGS = {
     "metadata_url": "https://test.api.aekos.org.au/v2/speciesSummary.json",
-    "occurrence_url": "https://test.api.aekos.org.au/v2/speciesData.json?rows=100",
-    "traitdata_url": "https://test.api.aekos.org.au/v2/traitData.json?rows=100",
-    "environmentdata_url": "https://test.api.aekos.org.au/v2/environmentData.json?rows=100",
+    "occurrence_url": "https://test.api.aekos.org.au/v2/speciesData.json?rows=20",
+    "traitdata_url": "https://test.api.aekos.org.au/v2/traitData.json?rows=20",
+    "environmentdata_url": "https://test.api.aekos.org.au/v2/environmentData.json?rows=20",
 }
 
 """
@@ -130,17 +130,23 @@ def download(source, dest=None):
 # Due to timeout constraint, shall limit max number of records requested to 100.
 def _download_as_file(dataurl, data, dest_file):
     nexturl = dataurl
+    retries = 0
     with open(dest_file, 'wb') as f:
         while nexturl:
-            r = requests.post(nexturl, json=data)
-            r.raise_for_status()
-            if r.status_code == 200:
-                f.write(r.text)
-                f.write(os.linesep)
-                nexturl = r.links.get("next", {}).get('url')
-            else:
-                raise Exception(
-                    'Fail to download from Aekos: status= {}'.format(r.status_code))
+            try:
+                r = requests.post(nexturl, json=data)
+                r.raise_for_status()
+                if r.status_code == 200:
+                    retries = 0
+                    f.write(r.text)
+                    f.write(os.linesep)
+                    nexturl = r.links.get("next", {}).get('url')
+                else:
+                    raise Exception("Error: Fail to download from {}: {}".format(dataurl, r.status_code))
+            except Exception as e:
+                retries += 1
+                if retries >= 3:
+                    raise
 
 def _process_trait_env_data(traitfile, envfile, destdir):
     # Return a dictionary (longitude, latitude) as key
@@ -289,7 +295,11 @@ def _add_trait_env_data(resultfile, fieldname, trait_env_data):
                         found = True
 
             if not found or fieldname == 'traits':
-                location = (row.get('locationID'), row.get('eventDate'), row.get('scientificName', ''))
+                scientificName = row.get('scientificName') or row.get('scientificNames') or row.get('taxonRemarks') or ''
+                if type(scientificName) is list:
+                    scientificName = scientificName[0]
+
+                location = (row.get('locationID'), row.get('eventDate'), scientificName)
                 trait_env_data.setdefault(location, {
                     LONGITUDE: row.get('decimalLongitude'),
                     LATITUDE: row.get('decimalLatitude'),
@@ -297,7 +307,7 @@ def _add_trait_env_data(resultfile, fieldname, trait_env_data):
                     EVENT_DATE: row.get('eventDate', ''),
                     MONTH: row.get('month'),
                     YEAR: row.get('year'),
-                    SPECIES: row.get('scientificName'),
+                    SPECIES: scientificName,
                     'traits': [],
                     'variables': []})[fieldname].append(data)
 
@@ -355,7 +365,7 @@ def _process_occurrence_data(occurrencefile, destdir):
 
             # Add citation if not already included
             citation = (row.get('bibliographicCitation', '') or '').strip()
-            scientificName = (row.get('scientificName') or row.get('taxonRemarks', '')).strip()
+            scientificName = (row.get('scientificName') or row.get('taxonRemarks') or '').strip()
             if citation and citation not in citationList:
                 citationList.append(row['bibliographicCitation'])
             csv_writer.writerow([scientificName, row['decimalLongitude'],
