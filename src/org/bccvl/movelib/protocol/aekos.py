@@ -126,8 +126,11 @@ def download(source, dest=None):
             if tmpfile and os.path.exists(tmpfile):
                 os.remove(tmpfile)
 
-# Download aekos dataset as a multiple json-response file i.e. consists of multiple json responses.
-# Due to timeout constraint, shall limit max number of records requested to 100.
+
+# Download aekos dataset as a multiple json-response file i.e. consists of
+# multiple json responses.
+# Due to timeout constraint, shall limit max number of records
+# requested to 100.
 def _download_as_file(dataurl, data, dest_file):
     nexturl = dataurl
     retries = 0
@@ -147,6 +150,7 @@ def _download_as_file(dataurl, data, dest_file):
                 retries += 1
                 if retries >= 3:
                     raise
+
 
 def _process_trait_env_data(traitfile, envfile, destdir):
     # Return a dictionary (longitude, latitude) as key
@@ -180,7 +184,7 @@ def _process_trait_env_data(traitfile, envfile, destdir):
             'name': zipfilename,
             'content_type': 'application/zip',
             'count': count,
-            'speciesName':  ','.join(speciesNames1 or speciesNames2)
+            'speciesName': ','.join(speciesNames1 or speciesNames2)
             }
 
 
@@ -257,8 +261,8 @@ def _add_trait_env_data(resultfile, fieldname, trait_env_data):
             continue
 
         # Check that the coordinates are in the range
-        if (row['decimalLongitude'] > 180.0 or row['decimalLongitude'] < -180.0 or \
-           row['decimalLatitude'] > 90.0 or row['decimalLatitude'] < -90.0):
+        if (row['decimalLongitude'] > 180.0 or row['decimalLongitude'] < -180.0 or
+              row['decimalLatitude'] > 90.0 or row['decimalLatitude'] < -90.0):
             raise Exception('Dataset contains out-of-range longitude/latitude value. Please download manually and fix the issue.')
 
 
@@ -331,6 +335,7 @@ def _addName(recordList, nameList):
         if name and name not in nameList:
             nameList.append(name)
 
+
 def _load_multi_json_responses(jsonfile):
     response = {"response": [], "responseHeader": {}}
     with io.open(jsonfile) as f:
@@ -340,6 +345,7 @@ def _load_multi_json_responses(jsonfile):
             if not response["responseHeader"] and resp.get("responseHeader", {}):
                 response["responseHeader"] = resp.get("responseHeader")
     return response
+
 
 def _process_occurrence_data(occurrencefile, destdir):
     # Get the occurrence data
