@@ -20,6 +20,8 @@ class AekosTest(unittest.TestCase):
         'url': 'aekos://traits?speciesName=Abutilon%20halophilum&traitName=height%2ClifeForm&envVarName=aspect%2CelectricalConductivity'
     }
 
+    AEKOS_API_BASE = 'https://test.api.aekos.org.au/v2'
+
     def setUp(self):
         self.tmpdir = tempfile.mkdtemp()
 
@@ -27,35 +29,35 @@ class AekosTest(unittest.TestCase):
         if self.tmpdir and os.path.exists(self.tmpdir):
             shutil.rmtree(self.tmpdir)
 
-    def _download_as_file(self, url, dest_file):
+    def _download_as_file(self, url, data, dest_file):
         # 1. occurrence_url
-        if url.startswith('https://api.aekos.org.au/v1/speciesData.json'):
+        if url.startswith('{}/speciesData.json'.format(self.AEKOS_API_BASE)):
             shutil.copy(resource_filename(
                 __name__, 'data/aekos_occurrence.json'), dest_file)
         # 2. metadata_url, destpath
-        elif url.startswith('https://api.aekos.org.au/v1/speciesSummary.json'):
+        elif url.startswith('{}/speciesSummary.json'.format(self.AEKOS_API_BASE)):
             shutil.copy(resource_filename(
                 __name__, 'data/aekos_metadata.json'), dest_file)
-        elif url.startswith('https://api.aekos.org.au/v1/traitData.json'):
+        elif url.startswith('{}/traitData.json'.format(self.AEKOS_API_BASE)):
             shutil.copy(resource_filename(
                 __name__, 'data/aekos_trait_data.json'), dest_file)
-        elif url.startswith('https://api.aekos.org.au/v1/environmentData.json'):
+        elif url.startswith('{}/environmentData.json'.format(self.AEKOS_API_BASE)):
             shutil.copy(resource_filename(
                 __name__, 'data/aekos_env_data.json'), dest_file)
 
-    def _download_multispecies(self, url, dest_file):
+    def _download_multispecies(self, url, data, dest_file):
         # 1. occurrence_url
-        if url.startswith('https://api.aekos.org.au/v1/speciesData.json'):
+        if url.startswith('{}/speciesData.json'.format(self.AEKOS_API_BASE)):
             shutil.copy(resource_filename(
                 __name__, 'data/aekos_occurrence.json'), dest_file)
         # 2. metadata_url, destpath
-        elif url.startswith('https://api.aekos.org.au/v1/speciesSummary.json'):
+        elif url.startswith('{}/speciesSummary.json'.format(self.AEKOS_API_BASE)):
             shutil.copy(resource_filename(
                 __name__, 'data/aekos_metadata.json'), dest_file)
-        elif url.startswith('https://api.aekos.org.au/v1/traitData.json'):
+        elif url.startswith('{}/traitData.json'.format(self.AEKOS_API_BASE)):
             shutil.copy(resource_filename(
                 __name__, 'data/aekos_trait_data_multispecies.json'), dest_file)
-        elif url.startswith('https://api.aekos.org.au/v1/environmentData.json'):
+        elif url.startswith('{}/environmentData.json'.format(self.AEKOS_API_BASE)):
             shutil.copy(resource_filename(
                 __name__, 'data/aekos_env_data.json'), dest_file)
 
