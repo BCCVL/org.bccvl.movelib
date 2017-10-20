@@ -1,9 +1,10 @@
+import filecmp
 import os.path
 from pkg_resources import resource_filename
 import shutil
 import tempfile
 import unittest
-import filecmp
+from urllib import urlencode
 
 import mock
 
@@ -13,11 +14,21 @@ from org.bccvl.movelib import move
 class AekosTest(unittest.TestCase):
 
     occurrence_source = {
-        'url': 'aekos://occurrence?speciesName=Abutilon%20halophilum'
+        'url': 'aekos://occurrence?{}'.format(
+            urlencode({
+                'speciesNames': ['Abutilon halophilum']
+            }, True)
+        )
     }
 
     traits_source = {
-        'url': 'aekos://traits?speciesName=Abutilon%20halophilum&traitName=height%2ClifeForm&envVarName=aspect%2CelectricalConductivity'
+        'url': 'aekos://traits?{}'.format(
+            urlencode({
+                'speciesNames': ['Abutilon halophilum'],
+                'tratNames': ['heght', 'LifeForm'],
+                'varNames': ['aspect', 'electricalConductivity']
+            }, True)
+        )
     }
 
     AEKOS_API_BASE = 'https://test.api.aekos.org.au/v2'
@@ -130,7 +141,13 @@ class AekosTest(unittest.TestCase):
         mock_download_as_file.side_effect = self._download_as_file
 
         self.traits_source = {
-            'url': 'aekos://traits?speciesName=Abutilon%20halophilum&traitName=height%2ClifeForm&envVarName=None'
+            'url': 'aekos://traits?{}'.format(
+                urlencode({
+                    'speciesNames': ['Abutilon halophilum'],
+                    'traitNames': ['height', 'lifeForm'],
+                    'varNames': None
+                }, True)
+            )
         }
 
         file_dest = {
@@ -159,7 +176,13 @@ class AekosTest(unittest.TestCase):
         mock_download_as_file.side_effect = self._download_as_file
 
         self.traits_source = {
-            'url': 'aekos://traits?speciesName=Abutilon%20halophilum&traitName=&envVarName=aspect%2CelectricalConductivity'
+            'url': 'aekos://traits?{}'.format(
+                urlencode({
+                    'speciesNames': ['Abutilon halophilum'],
+                    'traitNames': None,
+                    'varNames': ['aspect', 'electricalConductivity'],
+                })
+            )
         }
 
         file_dest = {
@@ -196,7 +219,13 @@ class AekosTest(unittest.TestCase):
         mock_download_as_file.side_effect = self._download_multispecies
 
         traits_source = {
-            'url': 'aekos://traits?speciesName=Abutilon%20fraseri,Abutilon%20halophilum&traitName=height%2ClifeForm&envVarName=aspect%2CelectricalConductivity'
+            'url': 'aekos://traits?{}'.format(
+                urlencode({
+                    'speciesNames': ['Abutilon fraseri', 'Abutilon halophilum'],
+                    'traitNames': ['height', 'lifeForm'],
+                    'varNames': ['aspect', 'electricalConductivity'],
+                })
+            )
         }
 
         file_dest = {
