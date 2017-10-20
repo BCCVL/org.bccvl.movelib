@@ -126,30 +126,35 @@ def download(source, dest=None):
             if tmpfile and os.path.exists(tmpfile):
                 os.remove(tmpfile)
 
-
-# Download aekos dataset as a multiple json-response file i.e. consists of
+# Download aekos dataset as a list of json-response file i.e. consists of 
 # multiple json responses.
-# Due to timeout constraint, shall limit max number of records
-# requested to 100.
+# Due to timeout constraint, shall limit max number of records requested to 100.
 def _download_as_file(dataurl, data, dest_file):
     nexturl = dataurl
     retries = 0
     with open(dest_file, 'wb') as f:
+        f.write("[")
         while nexturl:
             try:
                 r = requests.post(nexturl, json=data)
                 r.raise_for_status()
                 if r.status_code == 200:
                     retries = 0
-                    f.write(r.text)
                     f.write(os.linesep)
+                    f.write(r.text)
                     nexturl = r.links.get("next", {}).get('url')
+                    if nexturl:
+                        f.write(",")
                 else:
                     raise Exception("Error: Fail to download from {}: {}".format(dataurl, r.status_code))
             except Exception as e:
                 retries += 1
                 if retries >= 3:
+                    f.write(os.linesep)
+                    f.write("]")
                     raise
+        f.write(os.linesep)
+        f.write("]")
 
 
 def _process_trait_env_data(traitfile, envfile, destdir):
@@ -339,8 +344,8 @@ def _addName(recordList, nameList):
 def _load_multi_json_responses(jsonfile):
     response = {"response": [], "responseHeader": {}}
     with io.open(jsonfile) as f:
-        for line in f:
-            resp = json.loads(line)
+        responses = json.load(f)
+        for resp in responses:
             response["response"] += resp.get("response", [])
             if not response["responseHeader"] and resp.get("responseHeader", {}):
                 response["responseHeader"] = resp.get("responseHeader")
@@ -417,8 +422,9 @@ def _download_metadata(params, dest):
         # each json response is a list
         response = []
         with io.open(md_file) as f:
-            for line in f:
-                response += json.loads(line)
+            responses = json.load(f)
+            for resp in responses:
+                response += resp
         with io.open(md_file, 'wb') as f:
             json.dump(response, f)
     except Exception as e:
