@@ -1,8 +1,10 @@
 import filecmp
+import io
 import os.path
 from pkg_resources import resource_filename
 import shutil
 import tempfile
+import json
 import unittest
 from urllib import urlencode
 
@@ -25,7 +27,7 @@ class AekosTest(unittest.TestCase):
         'url': 'aekos://traits?{}'.format(
             urlencode({
                 'speciesNames': ['Abutilon halophilum'],
-                'tratNames': ['heght', 'LifeForm'],
+                'traitNames': ['heght', 'LifeForm'],
                 'varNames': ['aspect', 'electricalConductivity']
             }, True)
         )
@@ -43,34 +45,42 @@ class AekosTest(unittest.TestCase):
     def _download_as_file(self, url, data, dest_file):
         # 1. occurrence_url
         if url.startswith('{}/speciesData.json'.format(self.AEKOS_API_BASE)):
-            shutil.copy(resource_filename(
-                __name__, 'data/aekos_occurrence.json'), dest_file)
+            resp = [json.load(open(resource_filename(__name__, 'data/aekos_occurrence.json')))]
+            with io.open(dest_file, 'wb') as f:
+                json.dump(resp, f)            
         # 2. metadata_url, destpath
         elif url.startswith('{}/speciesSummary.json'.format(self.AEKOS_API_BASE)):
-            shutil.copy(resource_filename(
-                __name__, 'data/aekos_metadata.json'), dest_file)
+            resp = [json.load(open(resource_filename(__name__, 'data/aekos_metadata.json')))]
+            with io.open(dest_file, 'wb') as f:
+                json.dump(resp, f)            
         elif url.startswith('{}/traitData.json'.format(self.AEKOS_API_BASE)):
-            shutil.copy(resource_filename(
-                __name__, 'data/aekos_trait_data.json'), dest_file)
+            resp = [json.load(open(resource_filename(__name__, 'data/aekos_trait_data.json')))]
+            with io.open(dest_file, 'wb') as f:
+                json.dump(resp, f)                        
         elif url.startswith('{}/environmentData.json'.format(self.AEKOS_API_BASE)):
-            shutil.copy(resource_filename(
-                __name__, 'data/aekos_env_data.json'), dest_file)
+            resp = [json.load(open(resource_filename(__name__, 'data/aekos_env_data.json')))]
+            with io.open(dest_file, 'wb') as f:
+                json.dump(resp, f)                                    
 
     def _download_multispecies(self, url, data, dest_file):
         # 1. occurrence_url
         if url.startswith('{}/speciesData.json'.format(self.AEKOS_API_BASE)):
-            shutil.copy(resource_filename(
-                __name__, 'data/aekos_occurrence.json'), dest_file)
+            resp = [json.load(open(resource_filename(__name__, 'data/aekos_occurrence.json')))]
+            with io.open(dest_file, 'wb') as f:
+                json.dump(resp, f)                        
         # 2. metadata_url, destpath
         elif url.startswith('{}/speciesSummary.json'.format(self.AEKOS_API_BASE)):
-            shutil.copy(resource_filename(
-                __name__, 'data/aekos_metadata.json'), dest_file)
+            resp = [json.load(open(resource_filename(__name__, 'data/aekos_metadata.json')))]
+            with io.open(dest_file, 'wb') as f:
+                json.dump(resp, f)                        
         elif url.startswith('{}/traitData.json'.format(self.AEKOS_API_BASE)):
-            shutil.copy(resource_filename(
-                __name__, 'data/aekos_trait_data_multispecies.json'), dest_file)
+            resp = [json.load(open(resource_filename(__name__, 'data/aekos_trait_data_multispecies.json')))]
+            with io.open(dest_file, 'wb') as f:
+                json.dump(resp, f)                        
         elif url.startswith('{}/environmentData.json'.format(self.AEKOS_API_BASE)):
-            shutil.copy(resource_filename(
-                __name__, 'data/aekos_env_data.json'), dest_file)
+            resp = [json.load(open(resource_filename(__name__, 'data/aekos_env_data.json')))]
+            with io.open(dest_file, 'wb') as f:
+                json.dump(resp, f)                        
 
     @mock.patch('org.bccvl.movelib.protocol.aekos._download_as_file')
     def test_aekos_occurrence_to_file(self, mock_download_as_file=None):
@@ -94,8 +104,12 @@ class AekosTest(unittest.TestCase):
             self.tmpdir, 'data', 'aekos_citation.txt')))
 
         # Check file content
-        self.assertTrue(filecmp.cmp(os.path.join(self.tmpdir, 'aekos_metadata.json'),
-                                    resource_filename(__name__, 'data/aekos_metadata.json')))
+        md1 = json.load(open(os.path.join(self.tmpdir, 'aekos_metadata.json')))
+        md2 = json.load(open(resource_filename(__name__, 'data/aekos_metadata.json')))
+        self.assertTrue(len(md1) == len(md2))
+        for i in md1:
+            self.assertTrue(i in md2)
+
         self.assertTrue(filecmp.cmp(os.path.join(self.tmpdir, 'data', 'aekos_occurrence.csv'),
                                     resource_filename(__name__, 'data/aekos_occurrence.csv')))
         self.assertTrue(filecmp.cmp(os.path.join(self.tmpdir, 'data', 'aekos_citation.txt'),

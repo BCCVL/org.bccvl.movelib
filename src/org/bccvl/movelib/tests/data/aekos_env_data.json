@@ -10,7 +10,7 @@
       "speciesNames": [
         "Abutilon halophilum"
       ],
-      "envVarNames": [
+      "varNames": [
         "electricalConductivity",
         "aspect"
       ]
