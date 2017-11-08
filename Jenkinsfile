@@ -16,6 +16,8 @@ node('docker') {
             withVirtualenv() {
 
                 stage('Build') {
+                    // workaround setuptools and SNI problem by pre installing guscmversion
+                    sh '. ${VIRTUALENV}/bin/activate; pip install guscmversion'
                     sh '. ${VIRTUALENV}/bin/activate; pip install -e .'
                 }
 
