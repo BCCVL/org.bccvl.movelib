@@ -177,12 +177,15 @@ def _download_metadata_for_lsid(lsid_list, dest):
 
     # Get occurrence metadata
     metadata_url = settings['metadata_url']
+    results = []
     try:
-        response = requests.post(metadata_url, json=lsid_list)
-        metadata_file = os.path.join(dest, 'ala_metadata.json')
-        results = json.loads(response.text)['searchDTOList']
+        # bulklookup API can only take 175 lsids, so do a loop to get metadata.
+        for i in range(0, len(lsid_list), 100):
+            response = requests.post(metadata_url, json=lsid_list[i:min(i+100, len(lsid_list))])
+            results += json.loads(response.text)['searchDTOList']
         # TODO: bulk lookp may return null/None for unknown or outdated lsid
-        #       should we try to walk lsi d change history here?
+        #       should we try to walk lsid change history here?
+        metadata_file = os.path.join(dest, 'ala_metadata.json')
         with io.open(metadata_file, mode='wb') as f:
             json.dump(results, codecs.getwriter('utf-8')(f), indent=2)
 
