@@ -1,3 +1,11 @@
+"""
+Swift Service used to interface with Nectar Object data store
+
+Swift URL Scheme:
+swift://host:port/account/container/object
+
+http://host:port/v1/account/container/object
+"""
 import logging
 import os
 import re
@@ -7,23 +15,12 @@ from six.moves.urllib_parse import urlsplit
 
 from swiftclient.service import SwiftService, SwiftUploadObject
 
-"""
-Swift Service used to interface with Nectar Object data store
-
-Swift URL Scheme:
-swift://host:port/account/container/object
-
-http://host:port/v1/account/container/object
-"""
 
 PROTOCOLS = ('swift+http', 'swift+https')
 
-LOG = logging.getLogger(__name__)
 
 # TODO: add support for temp_url_key ....
 #       e.g. if temp_url_key is in source/dest, use normal http transfer?
-
-
 def validate(url):
     # check that container and file are specified in swift url.
     # i.e. swift://host:port/v1/account/container/path/to/file
@@ -41,7 +38,7 @@ def download(source, dest=None):
     @type local_dest_dir: str
     @return: True and a list of file downloaded if successful. Otherwise False.
     """
-
+    log = logging.getLogger(__name__)
     if not dest:
         dest = tempfile.mkstemp()
 
@@ -107,13 +104,13 @@ def download(source, dest=None):
                 if not retries:
                     # reraise if no retries left
                     raise
-                LOG.warn("Download from Swift failed: %s - %d retries left", e, retries)
+                log.warn("Download from Swift failed: %s - %d retries left", e, retries)
                 time.sleep(backoff)
                 backoff += backoff_inc
                 backoff_inc += 30
         return filelist
     except Exception as e:
-        LOG.error("Download from Swift failed: %s", e, exc_info=True)
+        log.error("Download from Swift failed: %s", e, exc_info=True)
         raise
 
 
@@ -126,7 +123,7 @@ def upload(source, dest):
     @type dest: Dictionary
     @return: True if upload is successful. Otherwise False.
     """
-
+    log = logging.getLogger(__name__)
     url = urlsplit(dest['url'])
 
     _, ver, account, container, object_name = url.path.split('/', 4)
@@ -168,10 +165,10 @@ def upload(source, dest):
                 if not retries:
                     # reraise if no retries left
                     raise
-                LOG.warn('Upload to Swift failed: %s - %d retries left', e, retries)
+                log.warn('Upload to Swift failed: %s - %d retries left', e, retries)
                 time.sleep(backoff)
                 backoff += backoff_inc
                 backoff_inc += 30
     except Exception as e:
-        LOG.error("Upload to swift failed: %s", e, exc_info=True)
+        log.error("Upload to swift failed: %s", e, exc_info=True)
         raise

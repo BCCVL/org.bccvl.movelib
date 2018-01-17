@@ -7,8 +7,6 @@ from six.moves.urllib_parse import urlsplit
 
 PROTOCOLS = ('http', 'https')
 
-LOG = logging.getLogger(__name__)
-
 
 def validate(url):
     return url.scheme in ['http', 'https']
@@ -23,6 +21,7 @@ def download(source, dest=None):
     @type dest: str
     @return: True and a list of files downloaded if successful. Otherwise False.
     """
+    log = logging.getLogger(__name__)
     response = None
     try:
         srcurl = urlsplit(source['url'])
@@ -64,7 +63,7 @@ def download(source, dest=None):
         }
         return [htmlfile]
     except Exception as e:
-        LOG.error("Could not download file: %s: %s", source['url'], e, exc_info=True)
+        log.error("Could not download file: %s: %s", source['url'], e, exc_info=True)
         raise
     finally:
         # We need to close response in case we did not consume all data

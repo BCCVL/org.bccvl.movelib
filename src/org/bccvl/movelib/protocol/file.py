@@ -1,13 +1,10 @@
 import logging
 import os
-import pwd
 import shutil
 from six.moves.urllib_parse import urlparse
 
 
 PROTOCOLS = ('file',)
-
-LOG = logging.getLogger(__name__)
 
 
 def validate(url):
@@ -23,7 +20,7 @@ def download(source, dest=None):
     @type dest: str
     @return: True and a list of files downloaded if successful. Otherwise False.
     """
-
+    log = logging.getLogger(__name__)
     try:
         srcurl = urlparse(source['url'])
         if os.path.exists(dest) and os.path.isdir(dest):
@@ -40,7 +37,8 @@ def download(source, dest=None):
                      }
         return [localfile]
     except Exception as e:
-        LOG.error("Could not download file: %s: %s", source['url'], e, exc_info=True)
+        log.error("Could not download file: %s: %s",
+                  source['url'], e, exc_info=True)
         raise
 
 
@@ -53,12 +51,13 @@ def upload(source, dest):
     @type dest_path: Dictionary
     @return: True if upload is successful. Otherwise False.
     """
-
+    log = logging.getLogger(__name__)
     try:
         url = urlparse(dest['url'])
         dest_filename = dest.get('filename', source['name'])
         dest_path = os.path.join(url.path, dest_filename)
         shutil.copy(source['url'], dest_path)
-    except:
-        LOG.error("Could not copy file %s to destination %s", source['url'], dest_path, exc_info=True)
+    except Exception:
+        log.error("Could not copy file %s to destination %s",
+                  source['url'], dest_path, exc_info=True)
         raise

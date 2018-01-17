@@ -1,3 +1,6 @@
+"""
+GBIFService used to interface with Global Biodiversity Information Facility (GBIF)
+"""
 import codecs
 import datetime
 import io
@@ -31,12 +34,6 @@ settings = {
     "dataset_url": "http://api.gbif.org/v1/dataset/{datasetkey}"
 }
 
-"""
-GBIFService used to interface with Global Biodiversity Information Facility (GBIF)
-"""
-
-LOG = logging.getLogger(__name__)
-
 
 def validate(url):
     return url.scheme == 'gbif' and url.query and parse_qs(url.query).get('lsid')
@@ -51,6 +48,7 @@ def download(source, dest=None):
     @type local_dest_dir: str
     @return: True and a list of file downloaded if successful. Otherwise False.
     """
+    log = logging.getLogger(__name__)
     url = urlparse(source['url'])
     lsid = parse_qs(url.query)['lsid'][0]
 
@@ -64,7 +62,7 @@ def download(source, dest=None):
                                    lsid, dest, csvfile['count'])
         return [dsfile, csvfile, mdfile]
     except Exception as e:
-        LOG.error(
+        log.error(
             "Failed to download occurrence data with lsid '{0}': {1}".format(lsid, e), exc_info=True)
         raise
 
@@ -91,6 +89,7 @@ def _download_occurrence_by_lsid(lsid, dest):
     # TODO: validate dest is a dir?
 
     # Get occurrence data
+    log = logging.getLogger(__name__)
     temp_file = None
     offset = 0
     limit = 300
@@ -146,7 +145,7 @@ def _download_occurrence_by_lsid(lsid, dest):
                              data_dest)
 
     except Exception as e:
-        LOG.error("Fail to download occurrence records from GBIF, %s", e, exc_info=True)
+        log.error("Fail to download occurrence records from GBIF, %s", e, exc_info=True)
         raise
     finally:
         if os.path.exists(temp_file):
@@ -163,6 +162,7 @@ def _download_occurrence_by_lsid(lsid, dest):
 def _get_dataset_citation(dskeylist, destfilepath):
     """Download dataset details to extract the citation record for each dataset.
     """
+    log = logging.getLogger(__name__)
     try:
         # save as utf-8 file
         with codecs.open(destfilepath, 'w', 'utf-8') as citfile:
@@ -176,7 +176,7 @@ def _get_dataset_citation(dskeylist, destfilepath):
                 f.close()
                 f = None
     except Exception as e:
-        LOG.error("Fail to download dataset citations from GBIF: %s", e, exc_info=True)
+        log.error("Fail to download dataset citations from GBIF: %s", e, exc_info=True)
         raise
     finally:
         f = None
@@ -188,12 +188,13 @@ def _download_metadata_for_lsid(lsid, dest):
     # TODO: verify dest is a dir?
 
     # Get occurrence metadata
+    log = logging.getLogger(__name__)
     metadata_url = settings['metadata_url'].format(lsid=lsid)
     try:
         metadata_file, _ = urlretrieve(metadata_url,
                                        os.path.join(dest, 'gbif_metadata.json'))
     except Exception as e:
-        LOG.error("Could not download occurrence metadata from GBIF for LSID %s : %s",
+        log.error("Could not download occurrence metadata from GBIF for LSID %s : %s",
                   lsid, e, exc_info=True)
         raise
 

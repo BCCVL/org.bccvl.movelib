@@ -10,8 +10,6 @@ from scp import SCPClient, SCPException
 
 PROTOCOLS = ('scp',)
 
-LOG = logging.getLogger(__name__)
-
 
 def validate(url):
     return (url.scheme == 'scp' and url.hostname.strip() != ''
@@ -27,6 +25,7 @@ def download(source, dest=None):
     @type local_dest_dir: str
     @return: True and a list of file downloaded if successful. Otherwise False.
     """
+    log = logging.getLogger(__name__)
     try:
         ssh = SSHClient()
         ssh.load_system_host_keys()
@@ -64,7 +63,7 @@ def download(source, dest=None):
                       }
         return [outputfile]
     except SCPException:
-        LOG.error("Could not SCP file %s from %s to local destination\
+        log.error("Could not SCP file %s from %s to local destination\
                   %s as user %s", url.path, url.hostname, dest, username, exc_info=True)
         raise
 
@@ -78,7 +77,7 @@ def upload(source, dest):
     @type dest_path: Dictionary
     @return: True if upload is successful. Otherwise False.
     """
-
+    log = logging.getLogger(__name__)
     url = urlsplit(dest['url'])
 
     try:
@@ -106,6 +105,6 @@ def upload(source, dest):
         scp.put(source['url'], url.path, recursive=True)  # recursive should be an option in dest dict?
         ssh.close()
     except Exception as e:
-        LOG.error("Could not SCP file %s to destination %s on %s as user %s: %s",
+        log.error("Could not SCP file %s to destination %s on %s as user %s: %s",
                   source['url'], url.path, url.hostname, username, e, exc_info=True)
         raise

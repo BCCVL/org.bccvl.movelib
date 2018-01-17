@@ -1,3 +1,6 @@
+"""
+ALAService used to interface with Atlas of Living Australia (ALA)
+"""
 import codecs
 import datetime
 import io
@@ -29,12 +32,6 @@ settings = {
     "occurrence_url": "{biocache_url}?qa={filter}&q={query}&fields={fields}&email={email}&reasonTypeId=4&sourceTypeId=2002"
 }
 
-"""
-ALAService used to interface with Atlas of Living Australia (ALA)
-"""
-
-LOG = logging.getLogger(__name__)
-
 
 def validate(url):
     return url.scheme == 'ala' and url.query
@@ -51,6 +48,7 @@ def download(source, dest=None):
     """
 
     # Parameters for the query
+    log = logging.getLogger(__name__)
     url = urlparse(source['url'])
     params = parse_qs(url.query)
     qparam = params['query'][0].split(':', 1)
@@ -82,13 +80,12 @@ def download(source, dest=None):
             dsfile = _ala_postprocess(csvfile['url'], None, occurrence_url, dest)
             return [dsfile, csvfile]
     except Exception as e:
-        LOG.error("Failed to download occurrence data with lsid '{0}': {1}".format(
+        log.error("Failed to download occurrence data with lsid '{0}': {1}".format(
             ', '.join(lsid_list), e), exc_info=True)
         raise
 
+
 # Return a list of index for the specified headers
-
-
 def _get_header_index(header, csv_header):
     index = {}
     for col in header:
@@ -126,6 +123,7 @@ def _download_occurrence(occurrence_url, dest):
     # TODO: validate dest is a dir?
 
     # Get occurrence data
+    log = logging.getLogger(__name__)
     temp_file = None
     lsid_list = []
     try:
@@ -155,11 +153,12 @@ def _download_occurrence(occurrence_url, dest):
                             ['ala_occurrence.csv', 'ala_citation.csv'])
 
     except KeyError:
-        LOG.error("Cannot find file %s in downloaded zip file", 'data.csv', exc_info=True)
+        log.error("Cannot find file %s in downloaded zip file", 'data.csv',
+                  exc_info=True)
         raise
     except Exception:
         # TODO: Not a zip file error.... does it have to raise?
-        LOG.error("The file %s is not a zip file", 'data.csv', exc_info=True)
+        log.error("The file %s is not a zip file", 'data.csv', exc_info=True)
         raise
     finally:
         if temp_file:
@@ -176,6 +175,7 @@ def _download_metadata_for_lsid(lsid_list, dest):
     """
 
     # Get occurrence metadata
+    log = logging.getLogger(__name__)
     metadata_url = settings['metadata_url']
     results = []
     try:
@@ -190,7 +190,7 @@ def _download_metadata_for_lsid(lsid_list, dest):
             json.dump(results, codecs.getwriter('utf-8')(f), indent=2)
 
     except Exception as e:
-        LOG.error("Could not download occurrence metadata from ALA for LSID %s : %s",
+        log.error("Could not download occurrence metadata from ALA for LSID %s : %s",
                   ', '.join(lsid_list), e, exc_info=True)
         raise
 

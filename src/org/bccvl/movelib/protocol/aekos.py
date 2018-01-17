@@ -1,3 +1,8 @@
+"""
+AEKOS-service used to interface with Advanced Ecological Knowledge
+and Conservation System.
+
+"""
 import codecs
 from datetime import datetime
 import io
@@ -6,13 +11,12 @@ import json
 import logging
 import os
 import requests
-import shutil
 import tempfile
 import zipfile
 
-from six.moves.urllib_parse import urlencode, urlparse, parse_qs
+from six.moves.urllib_parse import urlparse, parse_qs
 
-from org.bccvl.movelib.utils import UnicodeCSVWriter, UnicodeCSVReader
+from org.bccvl.movelib.utils import UnicodeCSVWriter
 
 
 SPECIES = u'species'
@@ -36,14 +40,6 @@ SETTINGS = {
     "environmentdata_url": "https://test.api.aekos.org.au/v2/environmentData.json?rows=20",
 }
 
-"""
-AEKOS-service used to interface with Advanced Ecological Knowledge
-and Conservation System.
-
-"""
-
-LOG = logging.getLogger(__name__)
-
 
 def validate(url):
     return url.scheme == 'aekos'
@@ -58,6 +54,7 @@ def download(source, dest=None):
     @type local_dest_dir: str
     @return: True and a list of file downloaded if successful. Otherwise False.
     """
+    log = logging.getLogger(__name__)
     url = urlparse(source['url'])
     service = url.netloc
     params = parse_qs(url.query)
@@ -117,7 +114,7 @@ def download(source, dest=None):
                                          'traits', src_urls)
             return [ds_file, csv_file]
     except Exception as e:
-        LOG.error("Failed to download {0} data with params '{1}': {2}".format(
+        log.error("Failed to download {0} data with params '{1}': {2}".format(
             service, params, e), exc_info=True)
         raise
     finally:
@@ -126,7 +123,8 @@ def download(source, dest=None):
             if tmpfile and os.path.exists(tmpfile):
                 os.remove(tmpfile)
 
-# Download aekos dataset as a list of json-response file i.e. consists of 
+
+# Download aekos dataset as a list of json-response file i.e. consists of
 # multiple json responses.
 # Due to timeout constraint, shall limit max number of records requested to 100.
 def _download_as_file(dataurl, data, dest_file):
@@ -195,6 +193,7 @@ def _process_trait_env_data(traitfile, envfile, destdir):
 
 def _save_as_csv(trait_env_data, headers, datadir):
     # Save citations and metadata as csv file
+    log = logging.getLogger(__name__)
     colhders = [LONGITUDE, LATITUDE, SPECIES, LOCATION_ID]
     otrhders = [u'trait_date', u'trait_citation', u'trait_metadata',
                 u'env_date', u'env_citation', u'env_metadata']
@@ -215,7 +214,8 @@ def _save_as_csv(trait_env_data, headers, datadir):
 
     # save trait/env data as csv file
     count = 0
-    colhders = [LONGITUDE, LATITUDE, EVENT_DATE, SPECIES, LOCATION_ID, MONTH, YEAR]
+    colhders = [LONGITUDE, LATITUDE, EVENT_DATE, SPECIES, LOCATION_ID,
+                MONTH, YEAR]
     with io.open(os.path.join(datadir, 'aekos_traits_env.csv'),
                  mode='wb') as csv_file:
         csv_writer = UnicodeCSVWriter(csv_file)
@@ -231,7 +231,7 @@ def _save_as_csv(trait_env_data, headers, datadir):
                         index = headers.index(record['name']) + len(colhders)
                         row[index] = record['value']
                     except ValueError as e:
-                        LOG.info('Skip {} ...'.format(record['name']))
+                        log.info('Skip {} ...'.format(record['name']))
                         continue
                 csv_writer.writerow(row)
                 count += 1
@@ -269,7 +269,6 @@ def _add_trait_env_data(resultfile, fieldname, trait_env_data):
         if (row['decimalLongitude'] > 180.0 or row['decimalLongitude'] < -180.0 or
               row['decimalLatitude'] > 90.0 or row['decimalLatitude'] < -90.0):
             raise Exception('Dataset contains out-of-range longitude/latitude value. Please download manually and fix the issue.')
-
 
         # Save the data with date, as it can have multiple records
         # collected at different dates.
@@ -326,7 +325,7 @@ def _add_trait_env_data(resultfile, fieldname, trait_env_data):
 
 
 def _renameFields(dataList, newNames):
-    return([{ newNames.get(name, name) : value for name, value in record.items()} for record in dataList])
+    return([{newNames.get(name, name): value for name, value in record.items()} for record in dataList])
 
 
 def _days(date1, date2):
@@ -412,6 +411,7 @@ def _download_metadata(params, dest):
     """Download metadata for species from AEKOS
     """
     # Get species metadata
+    log = logging.getLogger(__name__)
     md_file = os.path.join(dest, 'aekos_metadata.json')
     metadata_url = SETTINGS['metadata_url']
     try:
@@ -428,7 +428,7 @@ def _download_metadata(params, dest):
         with io.open(md_file, 'wb') as f:
             json.dump(response, f)
     except Exception as e:
-        LOG.error(
+        log.error(
             "Could not download occurrence metadata from AEKOS for %s : %s",
             params, e, exc_info=True)
         raise

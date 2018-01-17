@@ -2,7 +2,6 @@ import base64
 import csv
 import codecs
 import hashlib
-import io
 import os
 import socket
 import struct
@@ -204,8 +203,8 @@ class UnicodeCSVWriter(object):
         f ... an open file object that expects byte strings as input.
         """
         if six.PY3:
-            # wrap the bytesio into TextIOWrapper
-            f = codecs.getwriter('utf-8')(f) # io.TextIOWrapper(f, encoding='utf-8')
+            # wrap file in encoder
+            f = codecs.getwriter('utf-8')(f)
         self.writer = csv.writer(f)
 
     def writerow(self, row):
