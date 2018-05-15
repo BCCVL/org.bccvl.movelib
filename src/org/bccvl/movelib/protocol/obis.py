@@ -103,24 +103,26 @@ def _download_occurrence_by_obisid(obisid, dest):
         while offset < count or not lastpage:
             occurrence_url = settings['occurrence_url'].format(
                 obisid=obisid, offset=offset, limit=limit)
-            with urlopen(occurrence_url) as f:
-                t1 = json.load(f)
-                count = t1['count']
-                offset += t1['limit']
-                lastpage = data.get('lastpage', False)
-                for row in t1['results']:
-                    # TODO: isn't there a builtin for this?
-                    if 'decimalLongitude' not in row or 'decimalLatitude' not in row or \
-                       not _is_number(row['decimalLongitude']) or not _is_number(row['decimalLatitude']):
-                        continue
+            f = urlopen(occurrence_url)
+            t1 = json.load(f)
+            count = t1['count']
+            offset += t1['limit']
+            lastpage = t1.get('lastpage', False)
+            for row in t1['results']:
+                # TODO: isn't there a builtin for this?
+                if 'decimalLongitude' not in row or 'decimalLatitude' not in row or \
+                   not _is_number(row['decimalLongitude']) or not _is_number(row['decimalLatitude']):
+                    continue
 
-                    # Check that the coordinates are in the range
-                    if (row['decimalLongitude'] > 180.0 or row['decimalLongitude'] < -180.0 or \
-                       row['decimalLatitude'] > 90.0 or row['decimalLatitude'] < -90.0):
-                        raise Exception('Dataset contains out-of-range longitude/latitude value. Please download manually and fix the issue.')
+                # Check that the coordinates are in the range
+                if (row['decimalLongitude'] > 180.0 or row['decimalLongitude'] < -180.0 or \
+                   row['decimalLatitude'] > 90.0 or row['decimalLatitude'] < -90.0):
+                    raise Exception('Dataset contains out-of-range longitude/latitude value. Please download manually and fix the issue.')
 
-                    data.append([row['scientificName'], row['decimalLongitude'], row['decimalLatitude'], '',
-                                 row.get('eventDate', ''), row.get('yearcollected', ''), row.get('month', '')])
+                data.append([row['scientificName'], row['decimalLongitude'], row['decimalLatitude'], '',
+                             row.get('eventDate', ''), row.get('yearcollected', ''), row.get('month', '')])
+            f.close()
+            f = None
 
         rowCount = len(data)
         if rowCount == 1:
@@ -170,7 +172,7 @@ def _get_dataset_citation(obisid, destfilepath):
                 f = urlopen(dataset_url)
                 data = json.load(f)
                 count = data['count']
-                offset += data.get['limit']
+                offset += data['limit']
                 lastpage = data.get('lastpage', False)
                 for row in data['results']:
                     citation = row.get('citation', None)
