@@ -12,7 +12,7 @@ LOG = logging.getLogger(__name__)
 
 SERVICES = {}
 
-for service in ('ala', 'gbif', 'http', 'scp', 'swift', 'file', 'aekos'):
+for service in ('ala', 'gbif', 'http', 'scp', 'swift', 'file', 'aekos', 'obis'):
     try:
         module = importlib.import_module(
             '{0}.{1}.{2}'.format(__name__, 'protocol', service))

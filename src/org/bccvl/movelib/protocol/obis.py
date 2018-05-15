@@ -27,7 +27,7 @@ EVENT_DATE = 'date'
 YEAR = 'year'
 MONTH = 'month'
 
-# for OBIF, obisid is the speciesKey
+# for OBIS, obisid is the speciesKey
 settings = {
     "metadata_url": "https://api.iobis.org/taxon/{obisid}",
     "occurrence_url": "https://api.iobis.org/occurrence?&obisid={obisid}&offset={offset}&limit={limit}",
@@ -58,7 +58,7 @@ def download(source, dest=None):
     try:
         csvfile = _download_occurrence_by_obisid(obisid, dest)
         mdfile = _download_metadata_for_obisid(obisid, dest)
-        dsfile = _obif_postprocess(csvfile['url'], mdfile['url'],
+        dsfile = _obis_postprocess(csvfile['url'], mdfile['url'],
                                    obisid, dest, csvfile['count'])
         return [dsfile, csvfile, mdfile]
     except Exception as e:
@@ -69,10 +69,10 @@ def download(source, dest=None):
 
 def _zip_occurrence_data(occzipfile, data_folder_path):
     with zipfile.ZipFile(occzipfile, 'w') as zf:
-        zf.write(os.path.join(data_folder_path, 'obif_occurrence.csv'),
-                 'data/obif_occurrence.csv')
-        zf.write(os.path.join(data_folder_path, 'obif_citation.txt'),
-                 'data/obif_citation.txt')
+        zf.write(os.path.join(data_folder_path, 'obis_occurrence.csv'),
+                 'data/obis_occurrence.csv')
+        zf.write(os.path.join(data_folder_path, 'obis_citation.txt'),
+                 'data/obis_citation.txt')
 
 
 def _download_occurrence_by_obisid(obisid, dest):
@@ -80,9 +80,9 @@ def _download_occurrence_by_obisid(obisid, dest):
     Downloads Species Occurrence data from OBIS based on an obis ID  (i.e. species taxonKey)
     @param obisid: the obisid of the species to download occurrence data for
     @type obisid: str
-    @param remote_destination_directory: the destination directory that the OBIF files are going to end up inside of on the remote machine. Used to form the metadata .json file.
+    @param remote_destination_directory: the destination directory that the OBIS files are going to end up inside of on the remote machine. Used to form the metadata .json file.
     @type remote_destination_directory: str
-    @param local_dest_dir: The local directory to temporarily store the OBIF files in.
+    @param local_dest_dir: The local directory to temporarily store the OBIS files in.
     @type local_dest_dir: str
     @return True if the dataset was obtained. False otherwise
     """
@@ -204,7 +204,7 @@ def _download_metadata_for_obisid(obisid, dest):
             'content_type': 'application/json'}
 
 
-def _obif_postprocess(csvfile, mdfile, obisid, dest, num_occurrences):
+def _obis_postprocess(csvfile, mdfile, obisid, dest, num_occurrences):
     # Generate dataset metadata. csvfile is a zip file of occurrence csv file
     # and citation file.
 
@@ -253,10 +253,10 @@ def _obif_postprocess(csvfile, mdfile, obisid, dest, num_occurrences):
     # Write the dataset to a file
     dataset_path = os.path.join(dest, 'obis_dataset.json')
     f = io.open(dataset_path, mode='wb')
-    json.dump(obif_dataset, codecs.getwriter('utf-8')(f), indent=2)
+    json.dump(obis_dataset, codecs.getwriter('utf-8')(f), indent=2)
     f.close()
     dsfile = {'url': dataset_path,
-              'name': 'obif_dataset.json',
+              'name': 'obis_dataset.json',
               'content_type': 'application/json'}
     return dsfile
 
