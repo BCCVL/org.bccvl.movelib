@@ -177,7 +177,7 @@ def _get_dataset_citation(obisid, destfilepath):
                 for row in data['results']:
                     citation = row.get('citation', None)
                     if citation:
-                        citfile.write(citation + '\n')
+                        citfile.write(citation.replace('\n', ' ') + '\n')
                 f.close()
                 f = None
     except Exception as e:
