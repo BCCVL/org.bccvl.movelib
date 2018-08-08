@@ -26,7 +26,7 @@ EVENT_DATE = 'date'
 YEAR = 'year'
 MONTH = 'month'
 
-fields = "decimalLongitude,decimalLatitude,coordinateUncertaintyInMeters.p,eventDate.p,year.p,month.p,speciesID.p,species.p"
+fields = "decimalLongitude.p,decimalLatitude.p,coordinateUncertaintyInMeters.p,eventDate.p,year.p,month.p,speciesID.p,species.p"
 settings = {
     "metadata_url": "http://bie.ala.org.au/ws/species/guids/bulklookup",
     "occurrence_url": "{biocache_url}?qa={filter}&q={query}&fields={fields}&email={email}&reasonTypeId=4&sourceTypeId=2002"
@@ -318,8 +318,8 @@ def _normalize_occurrence(file_path, taxon_names):
         csv_header = next(csv_reader)
 
         # column headers in ALA csv file
-        colHeaders = [u'Longitude - original',
-                      u'Latitude - original',
+        colHeaders = [u'Longitude - processed',
+                      u'Latitude - processed',
                       u'Coordinate Uncertainty in Metres - parsed',
                       u'Event Date - parsed',
                       u'Year - parsed',
@@ -330,8 +330,8 @@ def _normalize_occurrence(file_path, taxon_names):
 
         colnumber = len([col for col in indexes if indexes[col] >= 0])
         for row in csv_reader:
-            lon = _get_value(row, indexes[u'Longitude - original'])
-            lat = _get_value(row, indexes[u'Latitude - original'])
+            lon = _get_value(row, indexes[u'Longitude - processed'])
+            lat = _get_value(row, indexes[u'Latitude - processed'])
             uncertainty = _get_value(row, indexes[u'Coordinate Uncertainty in Metres - parsed'])
             date = _get_value(row, indexes[u'Event Date - parsed'])
             year = _get_value(row, indexes[u'Year - parsed'])
