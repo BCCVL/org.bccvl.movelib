@@ -26,7 +26,8 @@ EVENT_DATE = 'date'
 YEAR = 'year'
 MONTH = 'month'
 
-fields = "decimalLongitude.p,decimalLatitude.p,coordinateUncertaintyInMeters.p,eventDate.p,year.p,month.p,speciesID.p,species.p"
+# To do: Shall replace species_guid with taxon_concept_lsid.
+fields = "decimalLongitude.p,decimalLatitude.p,coordinateUncertaintyInMeters.p,eventDate.p,year.p,month.p,species_guid,taxon_name"
 settings = {
     "metadata_url": "http://bie.ala.org.au/ws/species/guids/bulklookup",
     "occurrence_url": "{biocache_url}?qa={filter}&q={query}&fields={fields}&email={email}&reasonTypeId=4&sourceTypeId=2002"
@@ -318,26 +319,26 @@ def _normalize_occurrence(file_path, taxon_names):
         csv_header = next(csv_reader)
 
         # column headers in ALA csv file
-        colHeaders = [u'Longitude - processed',
-                      u'Latitude - processed',
-                      u'Coordinate Uncertainty in Metres - parsed',
+        colHeaders = [u'Longitude',
+                      u'Latitude',
+                      u'Coordinate Uncertainty in Metres',
                       u'Event Date - parsed',
-                      u'Year - parsed',
-                      u'Month - parsed',
-                      u'species ID - Processed',
-                      u'Species - matched']
+                      u'Year',
+                      u'Month',
+                      u'species _guid',
+                      u'Scientific Name']
         indexes = _get_header_index(colHeaders, csv_header)
 
         colnumber = len([col for col in indexes if indexes[col] >= 0])
         for row in csv_reader:
-            lon = _get_value(row, indexes[u'Longitude - processed'])
-            lat = _get_value(row, indexes[u'Latitude - processed'])
-            uncertainty = _get_value(row, indexes[u'Coordinate Uncertainty in Metres - parsed'])
+            lon = _get_value(row, indexes[u'Longitude'])
+            lat = _get_value(row, indexes[u'Latitude'])
+            uncertainty = _get_value(row, indexes[u'Coordinate Uncertainty in Metres'])
             date = _get_value(row, indexes[u'Event Date - parsed'])
-            year = _get_value(row, indexes[u'Year - parsed'])
-            month = _get_value(row, indexes[u'Month - parsed'])
-            guid = _get_value(row, indexes[u'species ID - Processed'])
-            species = _get_value(row, indexes[u'Species - matched'])
+            year = _get_value(row, indexes[u'Year'])
+            month = _get_value(row, indexes[u'Month'])
+            guid = _get_value(row, indexes[u'species _guid'])
+            species = _get_value(row, indexes[u'Scientific Name'])
 
             # Validate lat/lon
             try:
