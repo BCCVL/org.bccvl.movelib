@@ -96,7 +96,7 @@ def _get_header_index(header, csv_header):
 
 def _get_species_guid_from_csv(csvfile):
     lsids = set()
-    speciesColName = 'species ID - Processed'
+    speciesColName = 'species _ guid'
 
     with io.open(csvfile, mode='br+') as csv_file:
         csv_reader = UnicodeCSVReader(csv_file)
@@ -325,7 +325,7 @@ def _normalize_occurrence(file_path, taxon_names):
                       u'Event Date - parsed',
                       u'Year',
                       u'Month',
-                      u'species _guid',
+                      u'species _ guid',
                       u'Scientific Name']
         indexes = _get_header_index(colHeaders, csv_header)
 
@@ -337,7 +337,7 @@ def _normalize_occurrence(file_path, taxon_names):
             date = _get_value(row, indexes[u'Event Date - parsed'])
             year = _get_value(row, indexes[u'Year'])
             month = _get_value(row, indexes[u'Month'])
-            guid = _get_value(row, indexes[u'species _guid'])
+            guid = _get_value(row, indexes[u'species _ guid'])
             species = _get_value(row, indexes[u'Scientific Name'])
 
             # Validate lat/lon
