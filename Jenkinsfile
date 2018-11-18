@@ -29,7 +29,7 @@ node('docker') {
                        returnStatus: true)
 
                     // capture test result
-                    junit('junit.xml)
+                    junit('junit.xml')
                     // publish html coverage report
                     step([$class: 'CoberturaPublisher',
                           coberturaReportFile: 'coverage.xml']
