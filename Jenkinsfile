@@ -29,19 +29,16 @@ node('docker') {
                        returnStatus: true)
 
                     // capture test result
-                    step([
-                        $class: 'XUnitBuilder',
+                    xunit(
                         thresholds: [
-                            [$class: 'FailedThreshold', failureThreshold: '0',
-                                                        unstableThreshold: '1']
-                        ],
-                        tools: [
-                            [$class: 'JUnitType', deleteOutputFiles: true,
-                                                  failIfNotNew: true,
-                                                  pattern: 'junit.xml',
-                                                  stopProcessingIfError: true]
-                        ]
-                    ])
+                            failed(failureThreshold: '0', 
+                                   unstableThreshold: '1')], 
+                        tools: [JUnit(
+                            deleteOutputFiles: true, 
+                            failIfNotNew: true, 
+                            pattern: 'junit.xml', 
+                            stopProcessingIfError: true)]
+                    )
                     // publish html coverage report
                     step([$class: 'CoberturaPublisher',
                           coberturaReportFile: 'coverage.xml']
