@@ -42,7 +42,7 @@ node('docker') {
                     if (publishPackage(currentBuild.result, env.BRANCH_NAME)) {
 
                         sh 'rm -fr build dist'
-                        sh '. ${VIRTUALENV}/bin/activate; python setup.py register -r devpi sdist --universal upload -r devpi'
+                        sh '. ${VIRTUALENV}/bin/activate; python setup.py register -r devpi sdist upload -r devpi'
 
                     }
 
