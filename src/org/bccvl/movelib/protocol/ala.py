@@ -326,10 +326,26 @@ def _normalize_occurrence(file_path, taxon_names):
                       u'Year',
                       u'Month',
                       u'species _ guid',
-                      u'Scientific Name']
+                      u'Scientific Name',
+                      u'Supplied coordinates are zero']
         indexes = _get_header_index(colHeaders, csv_header)
+        # Skip if any of the fields requested above is missing
+        if -1 in indexes.values():
+            continue
 
-        colnumber = len([col for col in indexes if indexes[col] >= 0])
+        index2 = indexes[u'Supplied coordinates are zero'] # start of filter column
+        # Skip if one of our fileters returned true
+        if 'true' in row[index2:]:
+            continue
+
+        # Check for trait data; any columns between "Scientific Name" and "Supplied coordinates are zero"
+        new_headers = [SPECIES, LONGITUDE, LATITUDE, UNCERTAINTY, EVENT_DATE, YEAR, MONTH]
+        index1 = -1
+        if indexe2 > (indexes[u'Scientific Name'] + 1):
+            index1 = indexes[u'Scientific Name'] + 1
+            new_headers += csv_header[index1:index2]
+
+        new_csv = [new_headers]
         for row in csv_reader:
             lon = _get_value(row, indexes[u'Longitude'])
             lat = _get_value(row, indexes[u'Latitude'])
@@ -350,16 +366,17 @@ def _normalize_occurrence(file_path, taxon_names):
             # Either species ID or species name must present
             if not guid and not species:
                 continue
-            # one of our filters returned true (shouldn't happen?)
-            if u'true' in row[colnumber:]:
-                continue
 
             # Check that the coordinates are in the range
             if (lon > 180.0 or lon < -180.0 or lat > 90.0 or lat < -90.0):
                 raise Exception('Dataset contains out-of-range longitude/latitude value. Please download manually and fix the issue.')
 
             # For species name, use taxon name 1st, then the species name supplied in the occurrence file.
-            new_csv.append([taxon_names.get(guid, species), lon, lat, uncertainty, date, year, month])
+            new_row = [taxon_names.get(guid, species), lon, lat, uncertainty, date, year, month]
+            # Add trait values if any
+            if index1 > 0:
+                new_row += row[index1:index2]
+            new_csv.append(new_row)
 
     if len(new_csv) == 1:
         # Everything was filtered out!
@@ -372,7 +389,6 @@ def _normalize_occurrence(file_path, taxon_names):
 
     # return number of rows
     return len(new_csv) - 1
-
 
 def _get_value(row, index):
     return(row[index] if index >= 0 else u'')
