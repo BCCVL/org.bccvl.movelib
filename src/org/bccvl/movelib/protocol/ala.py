@@ -331,12 +331,9 @@ def _normalize_occurrence(file_path, taxon_names):
         indexes = _get_header_index(colHeaders, csv_header)
         # Skip if any of the fields requested above is missing
         if -1 in indexes.values():
-            continue
+            raise Exception("Missing some columns in ALA data")
 
         index2 = indexes[u'Supplied coordinates are zero'] # start of filter column
-        # Skip if one of our fileters returned true
-        if 'true' in row[index2:]:
-            continue
 
         # Check for trait data; any columns between "Scientific Name" and "Supplied coordinates are zero"
         new_headers = [SPECIES, LONGITUDE, LATITUDE, UNCERTAINTY, EVENT_DATE, YEAR, MONTH]
@@ -347,6 +344,10 @@ def _normalize_occurrence(file_path, taxon_names):
 
         new_csv = [new_headers]
         for row in csv_reader:
+            # Skip if one of our fileters returned true
+            if 'true' in row[index2:]:
+                continue
+
             lon = _get_value(row, indexes[u'Longitude'])
             lat = _get_value(row, indexes[u'Latitude'])
             uncertainty = _get_value(row, indexes[u'Coordinate Uncertainty in Metres'])
