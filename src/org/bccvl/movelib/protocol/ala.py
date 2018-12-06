@@ -338,7 +338,7 @@ def _normalize_occurrence(file_path, taxon_names):
         # Check for trait data; any columns between "Scientific Name" and "Supplied coordinates are zero"
         new_headers = [SPECIES, LONGITUDE, LATITUDE, UNCERTAINTY, EVENT_DATE, YEAR, MONTH]
         index1 = -1
-        if indexe2 > (indexes[u'Scientific Name'] + 1):
+        if index2 > (indexes[u'Scientific Name'] + 1):
             index1 = indexes[u'Scientific Name'] + 1
             new_headers += csv_header[index1:index2]
 
