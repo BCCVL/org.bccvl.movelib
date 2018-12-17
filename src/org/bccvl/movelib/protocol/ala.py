@@ -364,8 +364,8 @@ def _normalize_occurrence(file_path, taxon_names):
             except (ValueError, TypeError):
                 # ignore rows, where lat/lon are not numbers
                 continue
-            # Either species ID or species name must present
-            if not guid and not species:
+            # Exlude rows without species ID or species name.
+            if not guid or not species:
                 continue
 
             # Check that the coordinates are in the range

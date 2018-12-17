@@ -120,6 +120,10 @@ def _download_occurrence_by_lsid(lsid, dest):
                        row['decimalLatitude'] > 90.0 or row['decimalLatitude'] < -90.0):
                         raise Exception('Dataset contains out-of-range longitude/latitude value. Please download manually and fix the issue.')
 
+                    # Accept species and subspecies data only
+                    if row['taxonRank'] not in ('SPECIES', 'SUBSPECIES'):
+                        continue
+
                     # save the dataset key
                     if row['datasetKey'] not in datasetkeys:
                         datasetkeys.append(row['datasetKey'])
