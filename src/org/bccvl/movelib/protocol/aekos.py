@@ -34,10 +34,10 @@ PROTOCOLS = ('aekos',)
 
 # Limit rows to 20 due to timeout constraint
 SETTINGS = {
-    "metadata_url": "https://test.api.aekos.org.au/v2/speciesSummary.json",
-    "occurrence_url": "https://test.api.aekos.org.au/v2/speciesData.json?rows=20",
-    "traitdata_url": "https://test.api.aekos.org.au/v2/traitData.json?rows=20",
-    "environmentdata_url": "https://test.api.aekos.org.au/v2/environmentData.json?rows=20",
+    "metadata_url": "https://api.aekos.org.au/v2/speciesSummary.json",
+    "occurrence_url": "https://api.aekos.org.au/v2/speciesData.json?rows=20",
+    "traitdata_url": "https://api.aekos.org.au/v2/traitData.json?rows=20",
+    "environmentdata_url": "https://api.aekos.org.au/v2/environmentData.json?rows=20",
 }
 
 

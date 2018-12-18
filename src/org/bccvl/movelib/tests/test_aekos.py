@@ -33,7 +33,7 @@ class AekosTest(unittest.TestCase):
         )
     }
 
-    AEKOS_API_BASE = 'https://test.api.aekos.org.au/v2'
+    AEKOS_API_BASE = 'https://api.aekos.org.au/v2'
 
     def setUp(self):
         self.tmpdir = tempfile.mkdtemp()
