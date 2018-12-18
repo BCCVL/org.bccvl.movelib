@@ -114,6 +114,10 @@ def _download_occurrence_by_obisid(obisid, dest):
                    not _is_number(row['decimalLongitude']) or not _is_number(row['decimalLatitude']):
                     continue
 
+                # Skip over non-species data i.e. species field is absent
+                if not row.get('species') or not row.get('scientificName'):
+                    continue
+
                 # Check that the coordinates are in the range
                 if (row['decimalLongitude'] > 180.0 or row['decimalLongitude'] < -180.0 or \
                    row['decimalLatitude'] > 90.0 or row['decimalLatitude'] < -90.0):
