@@ -60,7 +60,7 @@ class ALATest(unittest.TestCase):
         # mock urllib.urlretriev ...
         #        return ala_metadata.json
         occurrence_url = "https://biocache-ws.ala.org.au/ws/occurrences/index/download"
-        query = "lsid:urn:lsid:biodiversity.org.au:afd.taxon:31a9b8b8-4e8f-4343-a15f-2ed24e0bf1ae"
+        query = "lsid:urn:lsid:biodiversity.org.au:afd.taxon:0e03431f-775a-4873-ac88-e003f15b359b"
         qfilter = "zeroCoordinates,badlyFormedBasisOfRecord,detectedOutlier,decimalLatLongCalculationFromEastingNorthingFailed,missingBasisOfRecord,decimalLatLongCalculationFromVerbatimFailed,coordinatesCentreOfCountry,geospatialIssue,coordinatesOutOfRange,speciesOutsideExpertRange,userVerified,processingError,decimalLatLongConverionFailed,coordinatesCentreOfStateProvince,habitatMismatch"
         email = "testuser@gmail.com"
         src_url = 'ala://ala?url={}&query={}&filter={}&email={}'.format(occurrence_url, query, qfilter, email)
