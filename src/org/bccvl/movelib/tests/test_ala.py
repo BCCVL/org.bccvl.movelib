@@ -23,7 +23,7 @@ class ALATest(unittest.TestCase):
     def _urlretrieve(self, url, dest=None):
         # 1. occurrence_url
         params = parse_qs(url)
-        if url.startswith('http://biocache.ala.org.au/ws/occurrences/index/download'):
+        if url.startswith('https://biocache-ws.ala.org.au/ws/occurrences/index/download'):
             query = params['q']
             temp_file = os.path.join(self.tmpdir, 'ala_data.zip')
             shutil.copy(pkg_resources.resource_filename(__name__, 'data/ala_data.zip'),
@@ -31,7 +31,7 @@ class ALATest(unittest.TestCase):
 
             return (temp_file, None)  # fd is ignored
         # 2. metadata_url, destpath
-        if url.startswith('http://bie.ala.org.au/ws/species'):
+        if url.startswith('https://bie-ws.ala.org.au/ws/species'):
             shutil.copy(pkg_resources.resource_filename(__name__, 'data/ala_metadata.json'),
                         dest)
             return (dest, None)
@@ -39,7 +39,7 @@ class ALATest(unittest.TestCase):
     def _urlretrieve_trait(self, url, dest=None):
         # 1. occurrence_url
         params = parse_qs(url)
-        if url.startswith('http://biocache.ala.org.au/ws/occurrences/index/download'):
+        if url.startswith('https://biocache-ws.ala.org.au/ws/occurrences/index/download'):
             query = params['q']
             temp_file = os.path.join(self.tmpdir, 'ala_trait_data.zip')
             shutil.copy(pkg_resources.resource_filename(__name__, 'data/ala_trait_data.zip'),
@@ -47,7 +47,7 @@ class ALATest(unittest.TestCase):
 
             return (temp_file, None)  # fd is ignored
         # 2. metadata_url, destpath
-        if url.startswith('http://bie.ala.org.au/ws/species'):
+        if url.startswith('https://bie-ws.ala.org.au/ws/species'):
             shutil.copy(pkg_resources.resource_filename(__name__, 'data/ala_metadata.json'),
                         dest)
             return (dest, None)
@@ -59,7 +59,7 @@ class ALATest(unittest.TestCase):
         #        return zip file with data.csv and citation.csv
         # mock urllib.urlretriev ...
         #        return ala_metadata.json
-        occurrence_url = "http://biocache.ala.org.au/ws/occurrences/index/download"
+        occurrence_url = "https://biocache-ws.ala.org.au/ws/occurrences/index/download"
         query = "lsid:urn:lsid:biodiversity.org.au:afd.taxon:31a9b8b8-4e8f-4343-a15f-2ed24e0bf1ae"
         qfilter = "zeroCoordinates,badlyFormedBasisOfRecord,detectedOutlier,decimalLatLongCalculationFromEastingNorthingFailed,missingBasisOfRecord,decimalLatLongCalculationFromVerbatimFailed,coordinatesCentreOfCountry,geospatialIssue,coordinatesOutOfRange,speciesOutsideExpertRange,userVerified,processingError,decimalLatLongConverionFailed,coordinatesCentreOfStateProvince,habitatMismatch"
         email = "testuser@gmail.com"
@@ -83,7 +83,7 @@ class ALATest(unittest.TestCase):
         #        return zip file with data.csv and citation.csv
         # mock urllib.urlretriev ...
         #        return ala_metadata.json
-        occurrence_url = "http://biocache.ala.org.au/ws/occurrences/index/download"
+        occurrence_url = "https://biocache-ws.ala.org.au/ws/occurrences/index/download"
         query = "qid:urn:lsid:biodiversity.org.au:afd.taxon:31a9b8b8-4e8f-4343-a15f-2ed24e0bf1ae"
         qfilter = "zeroCoordinates,badlyFormedBasisOfRecord,detectedOutlier,decimalLatLongCalculationFromEastingNorthingFailed,missingBasisOfRecord,decimalLatLongCalculationFromVerbatimFailed,coordinatesCentreOfCountry,geospatialIssue,coordinatesOutOfRange,speciesOutsideExpertRange,userVerified,processingError,decimalLatLongConverionFailed,coordinatesCentreOfStateProvince,habitatMismatch"
         email = "testuser@gmail.com"
@@ -106,7 +106,7 @@ class ALATest(unittest.TestCase):
         #        return zip file with data.csv and citation.csv
         # mock urllib.urlretriev ...
         #        return ala_metadata.json
-        occurrence_url = "http://biocache.ala.org.au/ws/occurrences/index/download"
+        occurrence_url = "https://biocache-ws.ala.org.au/ws/occurrences/index/download"
         query = "qid:urn:lsid:biodiversity.org.au:afd.taxon:31a9b8b8-4e8f-4343-a15f-2ed24e0bf1ae"
         qfilter = "zeroCoordinates,badlyFormedBasisOfRecord,detectedOutlier,decimalLatLongCalculationFromEastingNorthingFailed,missingBasisOfRecord,decimalLatLongCalculationFromVerbatimFailed,coordinatesCentreOfCountry,geospatialIssue,coordinatesOutOfRange,speciesOutsideExpertRange,userVerified,processingError,decimalLatLongConverionFailed,coordinatesCentreOfStateProvince,habitatMismatch"
         email = "testuser@gmail.com"

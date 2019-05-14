@@ -29,7 +29,7 @@ MONTH = 'month'
 # To do: Shall replace species_guid with taxon_concept_lsid.
 fields = "decimalLongitude.p,decimalLatitude.p,coordinateUncertaintyInMeters.p,eventDate.p,year.p,month.p,species_guid,taxon_name"
 settings = {
-    "metadata_url": "http://bie.ala.org.au/ws/species/guids/bulklookup",
+    "metadata_url": "https://bie-ws.ala.org.au/ws/species/guids/bulklookup",
     "occurrence_url": "{biocache_url}?qa={filter}&q={query}&fields={fields}&email={email}&reasonTypeId=4&sourceTypeId=2002"
 }
 
