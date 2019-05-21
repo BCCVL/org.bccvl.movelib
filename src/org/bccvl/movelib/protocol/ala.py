@@ -55,7 +55,7 @@ def download(source, dest=None):
     qparam = params['query'][0].split(':', 1)
     lsid = None
     lsid_list = []
-    if (qparam[0] == 'lsid'):
+    if (qparam[0] == 'taxon_concept_lsid'):
         lsid = qparam[1]
 
     if dest is None:
