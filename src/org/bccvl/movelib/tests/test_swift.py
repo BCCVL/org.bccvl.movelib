@@ -15,8 +15,8 @@ class SwiftTest(unittest.TestCase):
         'auth': 'https://keystone.example.com:5000/v2.0/',
         'user': 'username@example.com',
         'key': 'password',
-        'os_tenant_name': 'pt-12345',
-        'auth_version': '2'
+        'os_project_name': 'pt-12345',
+        'auth_version': '3'
     }
 
     swift_dest = {
@@ -24,8 +24,8 @@ class SwiftTest(unittest.TestCase):
         'auth': 'https://keystone.example.com:5000/v2.0/',
         'user': 'username@example.com',
         'key': 'password',
-        'os_tenant_name': 'pt-12345',
-        'auth_version': '2'
+        'os_project_name': 'pt-12345',
+        'auth_version': '3'
     }
 
     def setUp(self):

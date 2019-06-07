@@ -53,7 +53,7 @@ def download(source, dest=None):
             account=account)
     }
     # SwiftService knows about environment variables
-    for opt in ('os_auth_url', 'os_username', 'os_password', 'os_tenant_name', 'os_storage_url'):
+    for opt in ('os_auth_url', 'os_username', 'os_password', 'os_project_name', 'os_storage_url', 'os_user_domain_name', 'os_project_domain_name', 'auth_version'):
         if opt in source:
             swift_opts[opt] = source[opt]
     try:
@@ -136,7 +136,7 @@ def upload(source, dest):
             account=account)
     }
     # SwiftService knows about environment variables
-    for opt in ('os_auth_url', 'os_username', 'os_password', 'os_tenant_name', 'os_storage_url'):
+    for opt in ('os_auth_url', 'os_username', 'os_password', 'os_project_name', 'os_storage_url', 'os_user_domain_name', 'os_project_domain_name', 'auth_version'):
         if opt in dest:
             swift_opts[opt] = dest[opt]
     try:

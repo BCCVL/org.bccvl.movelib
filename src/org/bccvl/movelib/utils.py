@@ -97,7 +97,7 @@ def build_source(src, userid=None, settings=None):
     elif url.scheme in ('swift+http', 'swift+https'):
         # TODO: should check swift host name as well
         swift_settings = settings.get('swift', {})
-        for key in ('os_auth_url', 'os_username', 'os_password', 'os_tenant_name', 'os_storage_url'):
+        for key in ('os_auth_url', 'os_username', 'os_password', 'os_project_name', 'os_storage_url', 'os_user_domain_name', 'os_project_domain_name', 'auth_version'):
             if key in swift_settings:
                 source[key] = swift_settings[key]
     return source
@@ -112,7 +112,7 @@ def build_destination(dest, settings=None):
         # TODO: should check swift host name as well
         # FIXME: assumes settings is not None
         swift_settings = settings and settings.get('swift', {}) or {}
-        for key in ('os_auth_url', 'os_username', 'os_password', 'os_tenant_name', 'os_storage_url'):
+        for key in ('os_auth_url', 'os_username', 'os_password', 'os_project_name', 'os_storage_url', 'os_user_domain_name', 'os_project_domain_name', 'auth_version'):
             if key not in swift_settings:
                 continue
             destination[key] = swift_settings[key]
